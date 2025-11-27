@@ -112,6 +112,10 @@ if ($theme_mode === 'dark') {
             </div>
 
             <div class="hha-sidebar-footer">
+                <button class="hha-reload-btn" id="hha-reload-app">
+                    <span class="dashicons dashicons-update"></span>
+                    Reload App
+                </button>
                 <?php
                 $app_url = hha()->auth->get_app_url();
                 $logout_url = add_query_arg(

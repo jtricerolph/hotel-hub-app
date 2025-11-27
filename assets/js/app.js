@@ -37,6 +37,9 @@
             $('.hha-install-btn').on('click', () => this.installPWA());
             $('.hha-install-dismiss').on('click', () => this.dismissInstallPrompt());
 
+            // Reload app (clear cache)
+            $('#hha-reload-app').on('click', () => this.reloadApp());
+
             // Online/offline events
             window.addEventListener('online', () => this.setOnlineStatus(true));
             window.addEventListener('offline', () => this.setOnlineStatus(false));
@@ -236,6 +239,51 @@
         dismissInstallPrompt: function() {
             $('.hha-install-prompt').hide();
             localStorage.setItem('hha-install-dismissed', 'true');
+        },
+
+        reloadApp: async function() {
+            console.log('[HHA] Reloading app and clearing cache...');
+
+            // Show loading overlay
+            $('.hha-loading-overlay').show();
+
+            try {
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        console.log('[HHA] Service worker unregistered');
+                    }
+                }
+
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => {
+                            console.log('[HHA] Deleting cache:', cacheName);
+                            return caches.delete(cacheName);
+                        })
+                    );
+                }
+
+                // Clear local storage (except install dismissed state)
+                const installDismissed = localStorage.getItem('hha-install-dismissed');
+                localStorage.clear();
+                if (installDismissed) {
+                    localStorage.setItem('hha-install-dismissed', installDismissed);
+                }
+
+                console.log('[HHA] Cache cleared, reloading...');
+
+                // Force reload from server
+                window.location.reload(true);
+            } catch (error) {
+                console.error('[HHA] Error clearing cache:', error);
+                alert('Error clearing cache. Please try clearing your browser data manually.');
+                $('.hha-loading-overlay').hide();
+            }
         }
     };
 
