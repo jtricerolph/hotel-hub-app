@@ -148,19 +148,18 @@ class HHA_Auth {
      * @return string Redirect URL.
      */
     public function login_redirect($redirect_to, $requested_redirect_to, $user) {
-        // If redirect requested, use it
-        if (!empty($requested_redirect_to)) {
-            return $requested_redirect_to;
+        // Don't redirect to admin - always go to app instead
+        $is_admin_redirect = strpos($redirect_to, '/wp-admin') !== false ||
+                             strpos($requested_redirect_to, '/wp-admin') !== false;
+
+        // If frontend-only mode is enabled or redirecting to admin, go to app
+        if (get_option('hha_frontend_only_mode', false) || $is_admin_redirect) {
+            return $this->get_app_url();
         }
 
-        // Check if user has hotel hub permissions
-        if (isset($user->ID)) {
-            $user_modules = hha()->modules->get_user_modules($user->ID);
-
-            // If user has modules, redirect to app
-            if (!empty($user_modules)) {
-                return $this->get_app_url();
-            }
+        // Honor non-admin requested redirects
+        if (!empty($requested_redirect_to)) {
+            return $requested_redirect_to;
         }
 
         // Default redirect
