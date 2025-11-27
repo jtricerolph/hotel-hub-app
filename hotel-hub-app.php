@@ -120,3 +120,68 @@ register_deactivation_hook(__FILE__, 'hha_deactivate');
 function hha() {
     return HHA_Core::instance();
 }
+
+/**
+ * Register permissions with Workforce Authentication.
+ */
+function hha_register_permissions() {
+    // Only register if workforce auth is active
+    if (!function_exists('wfa_register_permission')) {
+        return;
+    }
+
+    // Basic access permission
+    wfa_register_permission(
+        'hha_access_app',
+        'Access Hotel Hub',
+        'Allow users to access the Hotel Hub PWA',
+        'Hotel Hub App'
+    );
+
+    // Hotel management permissions
+    wfa_register_permission(
+        'hha_view_hotels',
+        'View Hotels',
+        'View hotel list and details',
+        'Hotel Hub App'
+    );
+
+    wfa_register_permission(
+        'hha_manage_hotels',
+        'Manage Hotels',
+        'Create, edit, and delete hotels',
+        'Hotel Hub App'
+    );
+
+    // Integration management permissions
+    wfa_register_permission(
+        'hha_view_integrations',
+        'View Integrations',
+        'View integration settings and connection status',
+        'Hotel Hub App'
+    );
+
+    wfa_register_permission(
+        'hha_manage_integrations',
+        'Manage Integrations',
+        'Configure NewBook, ResOS, and other integrations',
+        'Hotel Hub App'
+    );
+
+    // Settings permissions
+    wfa_register_permission(
+        'hha_manage_settings',
+        'Manage Settings',
+        'Configure app settings, theme, and preferences',
+        'Hotel Hub App'
+    );
+
+    // Module permissions (for future modules)
+    wfa_register_permission(
+        'hha_access_modules',
+        'Access Modules',
+        'Access hotel-specific modules and features',
+        'Hotel Hub App'
+    );
+}
+add_action('wfa_register_permissions', 'hha_register_permissions');
