@@ -200,23 +200,22 @@
         },
 
         initPWA: function() {
-            let deferredPrompt;
-
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
-                deferredPrompt = e;
+                this.deferredPrompt = e;
 
-                // Show install prompt
-                setTimeout(() => {
-                    $('.hha-install-prompt').show();
-                }, 5000);
+                // Show install prompt (unless previously dismissed)
+                if (!localStorage.getItem('hha-install-dismissed')) {
+                    setTimeout(() => {
+                        $('.hha-install-prompt').show();
+                    }, 5000);
+                }
             });
-
-            this.deferredPrompt = deferredPrompt;
         },
 
         installPWA: function() {
             if (!this.deferredPrompt) {
+                console.log('Install prompt not available');
                 return;
             }
 
@@ -225,6 +224,8 @@
             this.deferredPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
                     console.log('PWA installed');
+                } else {
+                    console.log('PWA installation cancelled');
                 }
 
                 this.deferredPrompt = null;

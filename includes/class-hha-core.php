@@ -86,9 +86,12 @@ class HHA_Core {
         add_filter('body_class', array($this, 'add_body_classes'));
 
         // PWA hooks
-        add_action('wp_head', array($this->components['pwa'], 'add_manifest_link'));
-        add_action('wp_head', array($this->components['pwa'], 'add_pwa_meta_tags'));
+        add_action('wp_head', array($this->components['pwa'], 'add_manifest_link'), 1);
+        add_action('wp_head', array($this->components['pwa'], 'add_pwa_meta_tags'), 1);
         add_action('wp_footer', array($this->components['pwa'], 'register_service_worker'));
+
+        // Remove WordPress default site icon and manifest on app page
+        add_action('wp_head', array($this, 'remove_wp_default_pwa'), 0);
     }
 
     /**
@@ -259,6 +262,22 @@ class HHA_Core {
         }
 
         return $template;
+    }
+
+    /**
+     * Remove WordPress default PWA elements on app page.
+     */
+    public function remove_wp_default_pwa() {
+        if (!$this->is_app_page()) {
+            return;
+        }
+
+        // Remove site icon
+        remove_action('wp_head', 'wp_site_icon', 99);
+
+        // Remove WordPress default manifest and icon links
+        remove_action('wp_head', 'wp_manifest_link', 10);
+        remove_action('wp_head', 'rest_output_link_wp_head', 10);
     }
 
     /**
