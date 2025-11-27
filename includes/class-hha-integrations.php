@@ -256,27 +256,32 @@ class HHA_Integrations {
             );
         }
 
-        // Default to EU region
-        $region = isset($settings['region']) ? $settings['region'] : 'eu';
+        // Default to AU region
+        $region = isset($settings['region']) ? $settings['region'] : 'au';
 
-        // NewBook API endpoints by region
-        $endpoints = array(
-            'eu' => 'https://api-eu.newbook.cloud',
-            'us' => 'https://api-us.newbook.cloud',
-            'au' => 'https://api-au.newbook.cloud',
+        // NewBook API base URL (single endpoint, region passed in request body)
+        $base_url = 'https://api.newbook.cloud/rest/';
+
+        // Test with a simple bookings_list request for today
+        $test_date = date('Y-m-d');
+        $data = array(
+            'api_key' => $settings['api_key'],
+            'region' => $region,
+            'period_from' => $test_date . ' 00:00:00',
+            'period_to' => $test_date . ' 23:59:59',
+            'list_type' => 'staying'
         );
 
-        $base_url = isset($endpoints[$region]) ? $endpoints[$region] : $endpoints['eu'];
-
-        // Test API connection with simple request
-        $response = wp_remote_get(
-            $base_url . '/api/v1/properties',
+        // Test API connection with bookings_list endpoint
+        $response = wp_remote_post(
+            $base_url . 'bookings_list',
             array(
                 'timeout' => 10,
                 'headers' => array(
-                    'X-API-Key'    => $settings['api_key'],
                     'Content-Type' => 'application/json',
+                    'Authorization' => 'Basic ' . base64_encode($settings['username'] . ':' . $settings['password'])
                 ),
+                'body' => json_encode($data)
             )
         );
 
@@ -288,8 +293,17 @@ class HHA_Integrations {
         }
 
         $status_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        $response_data = json_decode($response_body, true);
 
         if ($status_code === 200) {
+            // Check if response has expected NewBook format
+            if (isset($response_data['success'])) {
+                return array(
+                    'success' => true,
+                    'message' => 'Connection successful - API credentials verified',
+                );
+            }
             return array(
                 'success' => true,
                 'message' => 'Connection successful',
