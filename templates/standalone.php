@@ -23,7 +23,7 @@ $current_hotel_id = hha()->auth->get_current_hotel_id();
     <meta name="theme-color" content="<?php echo esc_attr(get_option('hha_theme_primary_color', '#2196f3')); ?>">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Hotel Hub">
 
     <title><?php echo esc_html(get_bloginfo('name')); ?> - Hotel Hub</title>
