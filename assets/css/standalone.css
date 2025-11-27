@@ -64,12 +64,18 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: background-color 0.2s;
+    color: var(--hha-text-color, #333);
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .hha-menu-btn:hover,
 .hha-hotel-selector-btn:hover {
     background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-menu-btn .dashicons,
+.hha-hotel-selector-btn .dashicons {
+    color: var(--hha-text-color, #333);
 }
 
 .hha-hotel-selector-btn {
