@@ -331,9 +331,9 @@ class HHA_Admin {
     }
 
     /**
-     * Get workforce locations from departments table.
+     * Get workforce locations from cached locations table.
      *
-     * Returns unique locations from synced workforce departments.
+     * Returns locations synced from Workforce API.
      *
      * @return array Array of location objects with id and name.
      */
@@ -345,15 +345,13 @@ class HHA_Admin {
             return array();
         }
 
-        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'departments';
+        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'locations';
 
-        // Get unique location_ids and names from departments
+        // Get locations from cached table
         $locations = $wpdb->get_results(
-            "SELECT DISTINCT location_id as id,
-                    CONCAT('Location ', location_id) as name
+            "SELECT workforce_id as id, name
              FROM {$table_name}
-             WHERE location_id IS NOT NULL AND location_id > 0
-             ORDER BY location_id ASC"
+             ORDER BY name ASC"
         );
 
         return $locations ? $locations : array();
@@ -372,21 +370,17 @@ class HHA_Admin {
             return '';
         }
 
-        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'departments';
+        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'locations';
 
-        // Get first department with this location_id to verify it exists
-        $exists = $wpdb->get_var(
+        // Get location name from cached table
+        $name = $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table_name} WHERE location_id = %d",
+                "SELECT name FROM {$table_name} WHERE workforce_id = %d",
                 $location_id
             )
         );
 
-        if ($exists) {
-            return 'Location ' . $location_id;
-        }
-
-        return '';
+        return $name ? $name : '';
     }
 
     /**
