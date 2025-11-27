@@ -66,6 +66,95 @@ class HHA_Admin {
             'hotel-hub-settings',
             array($this, 'render_settings_page')
         );
+
+        // Add module settings organized by department
+        $this->add_module_settings_menus();
+    }
+
+    /**
+     * Add module settings menus grouped by department.
+     */
+    private function add_module_settings_menus() {
+        // Get all modules grouped by department
+        $modules_by_department = hha()->modules->get_modules_by_department_for_admin();
+
+        if (empty($modules_by_department)) {
+            return;
+        }
+
+        // Add department submenus
+        foreach ($modules_by_department as $department => $modules) {
+            $department_label = hha()->modules->get_department_label($department);
+            $department_slug = 'hotel-hub-modules-' . $department;
+
+            // Add department submenu
+            add_submenu_page(
+                'hotel-hub',
+                $department_label . ' Modules',
+                $department_label . ' Modules',
+                'manage_options',
+                $department_slug,
+                array($this, 'render_module_department_page')
+            );
+
+            // Add each module's settings pages
+            foreach ($modules as $module_id => $module) {
+                if (empty($module['settings_pages'])) {
+                    continue;
+                }
+
+                // If module has only one settings page, add it directly
+                if (count($module['settings_pages']) === 1) {
+                    $page = reset($module['settings_pages']);
+                    add_submenu_page(
+                        $department_slug,
+                        $page['title'],
+                        $page['menu_title'],
+                        'manage_options',
+                        $page['slug'],
+                        $page['callback']
+                    );
+                } else {
+                    // Module has multiple pages - create a submenu for the module
+                    $module_slug = 'hotel-hub-module-' . $module_id;
+
+                    // Add parent module menu
+                    $first_page = reset($module['settings_pages']);
+                    add_submenu_page(
+                        $department_slug,
+                        $module['name'],
+                        $module['name'],
+                        'manage_options',
+                        $module_slug,
+                        $first_page['callback']
+                    );
+
+                    // Add child pages
+                    foreach ($module['settings_pages'] as $page) {
+                        add_submenu_page(
+                            $module_slug,
+                            $page['title'],
+                            $page['menu_title'],
+                            'manage_options',
+                            $page['slug'],
+                            $page['callback']
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Render module department overview page.
+     */
+    public function render_module_department_page() {
+        $department = isset($_GET['page']) ? str_replace('hotel-hub-modules-', '', sanitize_text_field($_GET['page'])) : '';
+        $modules = hha()->modules->get_modules_by_department_for_admin();
+        $department_modules = isset($modules[$department]) ? $modules[$department] : array();
+        $department_label = hha()->modules->get_department_label($department);
+
+        include HHA_PLUGIN_DIR . 'admin/views/module-department.php';
     }
 
     /**

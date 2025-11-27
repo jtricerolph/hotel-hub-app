@@ -69,6 +69,7 @@ class HHA_Modules {
             'requires_hotel'   => true,
             'integrations'     => array(),
             'description'      => '',
+            'settings_pages'   => array(),
         ));
 
         // Store module with instance
@@ -309,12 +310,34 @@ class HHA_Modules {
     }
 
     /**
+     * Get modules grouped by department for admin (no permission filtering).
+     *
+     * @return array Modules grouped by department.
+     */
+    public function get_modules_by_department_for_admin() {
+        $modules = $this->get_modules();
+        $grouped = array();
+
+        foreach ($modules as $module_id => $config) {
+            $department = $config['department'];
+
+            if (!isset($grouped[$department])) {
+                $grouped[$department] = array();
+            }
+
+            $grouped[$department][$module_id] = $config;
+        }
+
+        return $grouped;
+    }
+
+    /**
      * Get human-readable department label.
      *
      * @param string $department Department slug.
      * @return string Department label.
      */
-    private function get_department_label($department) {
+    public function get_department_label($department) {
         $labels = array(
             'housekeeping' => 'Housekeeping',
             'frontdesk'    => 'Front Desk',
