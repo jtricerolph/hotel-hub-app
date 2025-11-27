@@ -75,7 +75,7 @@ class HHA_Core {
         add_filter('template_include', array($this, 'override_app_template'), 99);
 
         // Redirect all frontend to app (if enabled)
-        add_action('template_redirect', array($this, 'redirect_to_app'), 1);
+        add_action('template_redirect', array($this, 'redirect_to_app'), 5);
 
         // Enqueue assets
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
@@ -309,12 +309,22 @@ class HHA_Core {
         }
 
         // Don't redirect login/logout/register
-        if (in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-signup.php'))) {
+        if (isset($GLOBALS['pagenow']) && in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-signup.php'))) {
+            return;
+        }
+
+        // Check for login page in REQUEST_URI as additional safety
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'wp-login.php') !== false) {
             return;
         }
 
         // Don't redirect WordPress registration and password reset
         if (isset($_GET['action']) && in_array($_GET['action'], array('register', 'lostpassword', 'rp', 'resetpass'))) {
+            return;
+        }
+
+        // Don't redirect if processing login POST
+        if (isset($_POST['log']) && isset($_POST['pwd'])) {
             return;
         }
 
