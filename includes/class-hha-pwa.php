@@ -21,6 +21,9 @@ class HHA_PWA {
         add_action('init', array($this, 'add_rewrite_rules'));
         add_action('parse_request', array($this, 'handle_pwa_requests'));
         add_filter('query_vars', array($this, 'add_query_vars'));
+
+        // Load icon generator
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-icon-generator.php';
     }
 
     /**
@@ -29,6 +32,10 @@ class HHA_PWA {
     public function add_rewrite_rules() {
         add_rewrite_rule('^hotel-hub-manifest\.json$', 'index.php?hha_manifest=1', 'top');
         add_rewrite_rule('^hotel-hub-sw\.js$', 'index.php?hha_sw=1', 'top');
+
+        // Add rewrite rules for dynamic icons
+        add_rewrite_rule('^assets/icons/icon-([0-9]+)x([0-9]+)\.png$', 'index.php?hha_icon=$matches[1]', 'top');
+        add_rewrite_rule('^assets/icons/icon-([0-9]+)x([0-9]+)-maskable\.png$', 'index.php?hha_icon=$matches[1]&hha_maskable=1', 'top');
     }
 
     /**
@@ -40,11 +47,13 @@ class HHA_PWA {
     public function add_query_vars($vars) {
         $vars[] = 'hha_manifest';
         $vars[] = 'hha_sw';
+        $vars[] = 'hha_icon';
+        $vars[] = 'hha_maskable';
         return $vars;
     }
 
     /**
-     * Handle PWA requests (manifest and service worker).
+     * Handle PWA requests (manifest, service worker, and icons).
      *
      * @param WP $wp WordPress environment object.
      */
@@ -58,6 +67,15 @@ class HHA_PWA {
         // Handle service-worker.js
         if (isset($wp->query_vars['hha_sw'])) {
             $this->serve_service_worker();
+            exit;
+        }
+
+        // Handle icon requests
+        if (isset($wp->query_vars['hha_icon'])) {
+            $size = absint($wp->query_vars['hha_icon']);
+            $maskable = isset($wp->query_vars['hha_maskable']) && $wp->query_vars['hha_maskable'] == '1';
+
+            HHA_Icon_Generator::serve_icon($size, $maskable);
             exit;
         }
     }
@@ -82,7 +100,7 @@ class HHA_PWA {
     private function generate_manifest() {
         $site_name = get_bloginfo('name');
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
-        $icon_base = HHA_PLUGIN_URL . 'assets/icons/';
+        $icon_base = home_url('/assets/icons/');
 
         // Generate unique ID based on site URL
         $unique_id = 'com.hotelhub.' . md5(home_url());
@@ -309,7 +327,7 @@ JAVASCRIPT;
      */
     public function add_pwa_meta_tags() {
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
-        $icon_base = HHA_PLUGIN_URL . 'assets/icons/';
+        $icon_url = home_url('/assets/icons/icon-192x192.png');
 
         ?>
         <meta name="theme-color" content="<?php echo esc_attr($theme_color); ?>">
@@ -317,7 +335,7 @@ JAVASCRIPT;
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
         <meta name="apple-mobile-web-app-title" content="Hotel Hub">
-        <link rel="apple-touch-icon" href="<?php echo esc_url($icon_base . 'icon-192x192.png'); ?>">
+        <link rel="apple-touch-icon" href="<?php echo esc_url($icon_url); ?>">
         <?php
     }
 
