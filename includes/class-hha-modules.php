@@ -122,7 +122,7 @@ class HHA_Modules {
                 $has_permission = false;
 
                 foreach ($config['permissions'] as $permission) {
-                    if (wfa_user_can($user_id, $permission)) {
+                    if (wfa_user_can($permission, $user_id)) {
                         $has_permission = true;
                         break;
                     }
@@ -231,7 +231,7 @@ class HHA_Modules {
             $has_permission = false;
 
             foreach ($module['permissions'] as $permission) {
-                if (wfa_user_can($user_id, $permission)) {
+                if (wfa_user_can($permission, $user_id)) {
                     $has_permission = true;
                     break;
                 }
