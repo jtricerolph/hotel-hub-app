@@ -99,7 +99,14 @@ class HHA_PWA {
      */
     private function generate_manifest() {
         $site_name = get_bloginfo('name');
-        $theme_color = get_option('hha_theme_primary_color', '#2196f3');
+
+        // Set theme color to match header background
+        $theme_mode = get_option('hha_theme_mode', 'light');
+        $theme_color = '#ffffff'; // Default white for light theme
+        if ($theme_mode === 'dark') {
+            $theme_color = '#2d2d2d'; // Dark header background
+        }
+
         $icon_base = home_url('/assets/icons/');
 
         // Generate unique ID based on site URL
@@ -326,7 +333,13 @@ JAVASCRIPT;
      * Add PWA meta tags to page head.
      */
     public function add_pwa_meta_tags() {
-        $theme_color = get_option('hha_theme_primary_color', '#2196f3');
+        // Set status bar color to match header background
+        $theme_mode = get_option('hha_theme_mode', 'light');
+        $theme_color = '#ffffff'; // Default white for light theme
+        if ($theme_mode === 'dark') {
+            $theme_color = '#2d2d2d'; // Dark header background
+        }
+
         $icon_url = home_url('/assets/icons/icon-192x192.png');
 
         ?>

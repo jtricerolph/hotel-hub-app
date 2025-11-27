@@ -14,13 +14,20 @@ $user_modules = hha()->modules->get_user_modules();
 $user_hotels = hha()->hotels->get_active();
 $current_user = wp_get_current_user();
 $current_hotel_id = hha()->auth->get_current_hotel_id();
+
+// Get theme mode and set appropriate status bar color to match header
+$theme_mode = get_option('hha_theme_mode', 'light');
+$status_bar_color = '#ffffff'; // Default white for light theme
+if ($theme_mode === 'dark') {
+    $status_bar_color = '#2d2d2d'; // Dark header background
+}
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
 <head>
     <meta charset="<?php bloginfo('charset'); ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
-    <meta name="theme-color" content="<?php echo esc_attr(get_option('hha_theme_primary_color', '#2196f3')); ?>">
+    <meta name="theme-color" content="<?php echo esc_attr($status_bar_color); ?>">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
