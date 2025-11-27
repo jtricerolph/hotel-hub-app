@@ -56,9 +56,8 @@ if (!defined('ABSPATH')) {
 
                     // Get location name if available
                     $location_name = '';
-                    if ($hotel->location_id && function_exists('wfa_get_location')) {
-                        $location = wfa_get_location($hotel->location_id);
-                        $location_name = $location ? $location->name : '';
+                    if ($hotel->location_id) {
+                        $location_name = HHA_Admin::get_workforce_location_name($hotel->location_id);
                     }
                     ?>
                     <tr>

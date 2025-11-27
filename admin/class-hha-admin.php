@@ -93,10 +93,7 @@ class HHA_Admin {
         }
 
         // Get workforce locations if available
-        $locations = array();
-        if (function_exists('wfa_get_all_locations')) {
-            $locations = wfa_get_all_locations();
-        }
+        $locations = $this->get_workforce_locations();
 
         include HHA_PLUGIN_DIR . 'admin/views/hotel-edit.php';
     }
@@ -331,5 +328,109 @@ class HHA_Admin {
         }
 
         delete_transient('hha_admin_notices');
+    }
+
+    /**
+     * Get workforce locations from departments table.
+     *
+     * Returns unique locations from synced workforce departments.
+     *
+     * @return array Array of location objects with id and name.
+     */
+    private function get_workforce_locations() {
+        global $wpdb;
+
+        // Check if workforce-authentication plugin is active
+        if (!defined('WFA_TABLE_PREFIX')) {
+            return array();
+        }
+
+        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'departments';
+
+        // Get unique location_ids and names from departments
+        $locations = $wpdb->get_results(
+            "SELECT DISTINCT location_id as id,
+                    CONCAT('Location ', location_id) as name
+             FROM {$table_name}
+             WHERE location_id IS NOT NULL AND location_id > 0
+             ORDER BY location_id ASC"
+        );
+
+        return $locations ? $locations : array();
+    }
+
+    /**
+     * Get workforce location name by ID.
+     *
+     * @param int $location_id Location ID.
+     * @return string Location name or empty string.
+     */
+    public static function get_workforce_location_name($location_id) {
+        global $wpdb;
+
+        if (!defined('WFA_TABLE_PREFIX') || !$location_id) {
+            return '';
+        }
+
+        $table_name = $wpdb->prefix . WFA_TABLE_PREFIX . 'departments';
+
+        // Get first department with this location_id to verify it exists
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table_name} WHERE location_id = %d",
+                $location_id
+            )
+        );
+
+        if ($exists) {
+            return 'Location ' . $location_id;
+        }
+
+        return '';
+    }
+
+    /**
+     * Get user's location IDs from their department memberships.
+     *
+     * @param int $user_id WordPress user ID.
+     * @return array Array of location IDs.
+     */
+    public static function get_user_location_ids($user_id) {
+        global $wpdb;
+
+        if (!defined('WFA_TABLE_PREFIX') || !$user_id) {
+            return array();
+        }
+
+        // Get workforce user ID from WordPress user ID
+        $wfa_users_table = $wpdb->prefix . WFA_TABLE_PREFIX . 'users';
+        $workforce_user_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT workforce_id FROM {$wfa_users_table} WHERE wp_user_id = %d",
+                $user_id
+            )
+        );
+
+        if (!$workforce_user_id) {
+            return array();
+        }
+
+        // Get location IDs from user's departments
+        $dept_users_table = $wpdb->prefix . WFA_TABLE_PREFIX . 'department_users';
+        $dept_table = $wpdb->prefix . WFA_TABLE_PREFIX . 'departments';
+
+        $location_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT d.location_id
+                 FROM {$dept_users_table} du
+                 INNER JOIN {$dept_table} d ON du.department_id = d.id
+                 WHERE du.workforce_user_id = %d
+                   AND d.location_id IS NOT NULL
+                   AND d.location_id > 0",
+                $workforce_user_id
+            )
+        );
+
+        return $location_ids ? $location_ids : array();
     }
 }

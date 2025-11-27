@@ -60,11 +60,10 @@ class HHA_AJAX {
 
         // Filter by user's workforce locations if available
         $user_hotels = array();
+        $location_ids = HHA_Admin::get_user_location_ids($user_id);
 
-        if (function_exists('wfa_get_user_locations')) {
-            $user_locations = wfa_get_user_locations($user_id);
-            $location_ids = wp_list_pluck($user_locations, 'id');
-
+        if (!empty($location_ids)) {
+            // User has department/location assignments - filter hotels
             foreach ($all_hotels as $hotel) {
                 // Include hotel if no location assigned or if user has access to location
                 if (!$hotel->location_id || in_array($hotel->location_id, $location_ids)) {
@@ -78,7 +77,7 @@ class HHA_AJAX {
                 }
             }
         } else {
-            // If workforce functions not available, return all hotels
+            // No location restrictions - return all hotels
             foreach ($all_hotels as $hotel) {
                 $user_hotels[] = array(
                     'id'       => $hotel->id,
