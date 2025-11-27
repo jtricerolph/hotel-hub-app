@@ -74,6 +74,9 @@ class HHA_Core {
         // Template override for standalone app
         add_filter('template_include', array($this, 'override_app_template'), 99);
 
+        // Redirect all frontend to app (if enabled)
+        add_action('template_redirect', array($this, 'redirect_to_app'), 1);
+
         // Enqueue assets
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -278,6 +281,73 @@ class HHA_Core {
         // Remove WordPress default manifest and icon links
         remove_action('wp_head', 'wp_manifest_link', 10);
         remove_action('wp_head', 'rest_output_link_wp_head', 10);
+    }
+
+    /**
+     * Redirect all frontend pages to the app (if enabled).
+     */
+    public function redirect_to_app() {
+        // Check if frontend-only mode is enabled
+        if (!get_option('hha_frontend_only_mode', false)) {
+            return;
+        }
+
+        // Don't redirect if already on app page
+        if ($this->is_app_page()) {
+            return;
+        }
+
+        // Don't redirect admin pages
+        if (is_admin()) {
+            return;
+        }
+
+        // Don't redirect login/logout
+        if (in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-signup.php'))) {
+            return;
+        }
+
+        // Don't redirect REST API requests
+        if (defined('REST_REQUEST') && REST_REQUEST) {
+            return;
+        }
+
+        // Don't redirect AJAX requests
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            return;
+        }
+
+        // Don't redirect AJAX requests (wp-admin/admin-ajax.php)
+        if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'admin-ajax.php') !== false) {
+            return;
+        }
+
+        // Don't redirect feeds
+        if (is_feed()) {
+            return;
+        }
+
+        // Don't redirect PWA assets (manifest, service worker, icons)
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $request_uri = $_SERVER['REQUEST_URI'];
+            if (strpos($request_uri, 'hotel-hub-manifest.json') !== false ||
+                strpos($request_uri, 'hotel-hub-sw.js') !== false ||
+                strpos($request_uri, 'assets/icons/') !== false) {
+                return;
+            }
+        }
+
+        // Don't redirect if user is logging out
+        if (isset($_GET['hha_logout'])) {
+            return;
+        }
+
+        // Get app URL
+        $app_url = $this->components['auth']->get_app_url();
+
+        // Redirect to app
+        wp_safe_redirect($app_url);
+        exit;
     }
 
     /**

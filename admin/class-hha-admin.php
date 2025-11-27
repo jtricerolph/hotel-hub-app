@@ -193,6 +193,7 @@ class HHA_Admin {
     public function render_settings_page() {
         $theme_mode = get_option('hha_theme_mode', 'light');
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
+        $frontend_only_mode = get_option('hha_frontend_only_mode', false);
 
         include HHA_PLUGIN_DIR . 'admin/views/settings.php';
     }
@@ -342,9 +343,11 @@ class HHA_Admin {
 
         $theme_mode = sanitize_text_field($_POST['theme_mode']);
         $theme_color = sanitize_hex_color($_POST['theme_primary_color']);
+        $frontend_only_mode = isset($_POST['frontend_only_mode']) ? (bool) $_POST['frontend_only_mode'] : false;
 
         update_option('hha_theme_mode', $theme_mode);
         update_option('hha_theme_primary_color', $theme_color);
+        update_option('hha_frontend_only_mode', $frontend_only_mode);
 
         $this->add_notice('Settings saved successfully', 'success');
     }

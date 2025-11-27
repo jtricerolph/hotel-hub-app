@@ -71,6 +71,20 @@ if (!defined('ABSPATH')) {
             </tr>
 
             <tr>
+                <th><label for="frontend_only_mode">Frontend-Only Mode</label></th>
+                <td>
+                    <input type="checkbox" id="frontend_only_mode" name="frontend_only_mode" value="1"
+                           <?php checked($frontend_only_mode, true); ?>>
+                    <label for="frontend_only_mode">Redirect all frontend pages to the app</label>
+                    <p class="description">
+                        When enabled, all frontend pages (home, posts, pages) will redirect to the Hotel Hub app.
+                        Admin and login pages will still work normally. <strong>Warning:</strong> This will make
+                        the app the only accessible page on your site's frontend.
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
                 <th><label>PWA Manifest</label></th>
                 <td>
                     <p><a href="<?php echo esc_url(home_url('/hotel-hub-manifest.json')); ?>" target="_blank">View Manifest</a></p>
