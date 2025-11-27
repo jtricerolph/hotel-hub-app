@@ -71,6 +71,9 @@ class HHA_Core {
      * Initialize WordPress hooks.
      */
     private function init_hooks() {
+        // Template override for standalone app
+        add_filter('template_include', array($this, 'override_app_template'), 99);
+
         // Enqueue assets
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_assets'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_assets'));
@@ -238,6 +241,24 @@ class HHA_Core {
         $app_page_id = get_option('hha_app_page_id');
 
         return $app_page_id && is_page($app_page_id);
+    }
+
+    /**
+     * Override template for app page to use standalone template.
+     *
+     * @param string $template Current template path.
+     * @return string Modified template path.
+     */
+    public function override_app_template($template) {
+        if ($this->is_app_page()) {
+            // Require authentication
+            $this->components['auth']->require_authentication();
+
+            // Use standalone template instead of theme template
+            return HHA_PLUGIN_DIR . 'templates/standalone.php';
+        }
+
+        return $template;
     }
 
     /**
