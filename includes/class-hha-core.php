@@ -299,8 +299,21 @@ class HHA_Core {
 
         // Don't redirect custom login page
         $login_page_id = get_option('hha_login_page_id');
-        if ($login_page_id && is_page($login_page_id)) {
-            return;
+        if ($login_page_id) {
+            // Check if current page is the login page
+            if (is_page($login_page_id)) {
+                return;
+            }
+
+            // Also check by page slug in REQUEST_URI
+            $login_page = get_post($login_page_id);
+            if ($login_page && isset($_SERVER['REQUEST_URI'])) {
+                $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+                $request_path = trim($request_path, '/');
+                if ($request_path === $login_page->post_name || $request_path === 'login') {
+                    return;
+                }
+            }
         }
 
         // Don't redirect admin pages
