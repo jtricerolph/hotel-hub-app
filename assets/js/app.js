@@ -1,0 +1,246 @@
+/**
+ * Hotel Hub App - Main JavaScript
+ *
+ * Handles app navigation, module loading, and user interactions.
+ *
+ * @package Hotel_Hub_App
+ */
+
+(function($) {
+    'use strict';
+
+    const HotelHubApp = {
+        currentHotelId: null,
+        currentModuleId: null,
+
+        init: function() {
+            this.bindEvents();
+            this.loadNavigation();
+            this.checkOnlineStatus();
+            this.initPWA();
+        },
+
+        bindEvents: function() {
+            // Menu toggle
+            $('.hha-menu-btn').on('click', () => this.toggleSidebar());
+            $('.hha-sidebar-close, .hha-sidebar-overlay').on('click', () => this.closeSidebar());
+
+            // Hotel selector
+            $('.hha-hotel-selector-btn').on('click', () => this.openHotelSelector());
+            $('.hha-modal-close, .hha-modal-overlay').on('click', () => this.closeHotelSelector());
+            $(document).on('click', '.hha-hotel-item', (e) => this.selectHotel($(e.currentTarget)));
+
+            // Module navigation
+            $(document).on('click', '.hha-nav-module', (e) => this.loadModule($(e.currentTarget)));
+
+            // PWA install
+            $('.hha-install-btn').on('click', () => this.installPWA());
+            $('.hha-install-dismiss').on('click', () => this.dismissInstallPrompt());
+
+            // Online/offline events
+            window.addEventListener('online', () => this.setOnlineStatus(true));
+            window.addEventListener('offline', () => this.setOnlineStatus(false));
+        },
+
+        toggleSidebar: function() {
+            $('.hha-sidebar').toggleClass('open');
+        },
+
+        closeSidebar: function() {
+            $('.hha-sidebar').removeClass('open');
+        },
+
+        openHotelSelector: function() {
+            $('.hha-hotel-selector').show();
+        },
+
+        closeHotelSelector: function() {
+            $('.hha-hotel-selector').hide();
+        },
+
+        selectHotel: function($item) {
+            const hotelId = $item.data('hotel-id');
+
+            $.post(hhaData.ajaxUrl, {
+                action: 'hha_set_current_hotel',
+                nonce: hhaData.nonce,
+                hotel_id: hotelId
+            }, (response) => {
+                if (response.success) {
+                    this.currentHotelId = hotelId;
+                    $('.hha-current-hotel-name').text(response.data.hotel.name);
+                    this.closeHotelSelector();
+                    this.loadNavigation();
+
+                    // Clear current module
+                    this.currentModuleId = null;
+                    this.showWelcome();
+                }
+            });
+        },
+
+        loadNavigation: function() {
+            const $nav = $('#hha-navigation');
+
+            $.post(hhaData.ajaxUrl, {
+                action: 'hha_get_navigation',
+                nonce: hhaData.nonce,
+                hotel_id: this.currentHotelId
+            }, (response) => {
+                if (response.success) {
+                    this.renderNavigation(response.data.navigation, $nav);
+                }
+            });
+        },
+
+        renderNavigation: function(navigation, $container) {
+            $container.empty();
+
+            if (navigation.length === 0) {
+                $container.html('<div style="padding: 20px; text-align: center; color: #999;">No modules available</div>');
+                return;
+            }
+
+            navigation.forEach(dept => {
+                const $dept = $('<div class="hha-nav-department">');
+                $dept.append(`<div class="hha-nav-department-header">${dept.label}</div>`);
+
+                dept.modules.forEach(module => {
+                    const $module = $(`
+                        <div class="hha-nav-module" data-module-id="${module.id}">
+                            <span class="hha-nav-module-icon ${module.icon}"></span>
+                            <span class="hha-nav-module-name">${module.name}</span>
+                        </div>
+                    `);
+                    $dept.append($module);
+                });
+
+                $container.append($dept);
+            });
+        },
+
+        loadModule: function($moduleItem) {
+            const moduleId = $moduleItem.data('module-id');
+
+            if (moduleId === this.currentModuleId) {
+                this.closeSidebar();
+                return;
+            }
+
+            // Update active state
+            $('.hha-nav-module').removeClass('active');
+            $moduleItem.addClass('active');
+
+            // Show loading
+            this.showLoading();
+            this.closeSidebar();
+
+            $.post(hhaData.ajaxUrl, {
+                action: 'hha_load_module',
+                nonce: hhaData.nonce,
+                module_id: moduleId,
+                hotel_id: this.currentHotelId
+            }, (response) => {
+                this.hideLoading();
+
+                if (response.success) {
+                    this.currentModuleId = moduleId;
+                    $('.hha-module-container').html(response.data.content);
+                } else {
+                    this.showError(response.data.message || 'Failed to load module');
+                }
+            }).fail(() => {
+                this.hideLoading();
+                this.showError('Network error. Please try again.');
+            });
+        },
+
+        showWelcome: function() {
+            $('.hha-module-container').html(`
+                <div class="hha-welcome">
+                    <div class="hha-welcome-icon">
+                        <span class="dashicons dashicons-building"></span>
+                    </div>
+                    <h2>Welcome to Hotel Hub</h2>
+                    <p>Select a module from the menu to get started.</p>
+                </div>
+            `);
+        },
+
+        showLoading: function() {
+            $('.hha-loading-overlay').show();
+        },
+
+        hideLoading: function() {
+            $('.hha-loading-overlay').hide();
+        },
+
+        showError: function(message) {
+            $('.hha-module-container').html(`
+                <div style="max-width: 600px; margin: 60px auto; text-align: center;">
+                    <div style="font-size: 60px; color: #f44336; margin-bottom: 20px;">
+                        <span class="dashicons dashicons-warning"></span>
+                    </div>
+                    <h2>Error</h2>
+                    <p>${message}</p>
+                </div>
+            `);
+        },
+
+        checkOnlineStatus: function() {
+            this.setOnlineStatus(navigator.onLine);
+        },
+
+        setOnlineStatus: function(isOnline) {
+            if (isOnline) {
+                $('.hha-offline-indicator').hide();
+            } else {
+                $('.hha-offline-indicator').show();
+            }
+        },
+
+        initPWA: function() {
+            let deferredPrompt;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                // Show install prompt
+                setTimeout(() => {
+                    $('.hha-install-prompt').show();
+                }, 5000);
+            });
+
+            this.deferredPrompt = deferredPrompt;
+        },
+
+        installPWA: function() {
+            if (!this.deferredPrompt) {
+                return;
+            }
+
+            this.deferredPrompt.prompt();
+
+            this.deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('PWA installed');
+                }
+
+                this.deferredPrompt = null;
+                $('.hha-install-prompt').hide();
+            });
+        },
+
+        dismissInstallPrompt: function() {
+            $('.hha-install-prompt').hide();
+            localStorage.setItem('hha-install-dismissed', 'true');
+        }
+    };
+
+    // Initialize on document ready
+    $(document).ready(() => {
+        HotelHubApp.init();
+    });
+
+})(jQuery);

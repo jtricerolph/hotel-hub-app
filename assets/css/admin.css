@@ -1,0 +1,186 @@
+/**
+ * Hotel Hub App - Admin Styles
+ *
+ * WordPress admin interface styles.
+ *
+ * @package Hotel_Hub_App
+ */
+
+/* === General === */
+.hha-tabs {
+    margin-top: 20px;
+}
+
+.hha-tab-nav {
+    border-bottom: 1px solid #ccc;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hha-tab-nav li {
+    display: inline-block;
+    margin: 0;
+}
+
+.hha-tab-link {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+    color: #555;
+}
+
+.hha-tab-link:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.hha-tab-link.active {
+    background: #fff;
+    border-color: #ccc;
+    color: #0073aa;
+}
+
+.hha-tab-content {
+    display: none;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.hha-tab-content.active {
+    display: block;
+}
+
+/* === Image Upload === */
+.hha-image-upload {
+    max-width: 500px;
+}
+
+.hha-image-preview {
+    margin-bottom: 10px;
+}
+
+.hha-image-preview img {
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: #fff;
+    display: block;
+}
+
+.hha-upload-image-btn,
+.hha-remove-image-btn {
+    margin-right: 8px;
+}
+
+/* === Hotels List === */
+.wp-list-table .hha-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 3px;
+    text-transform: uppercase;
+    margin: 2px;
+}
+
+.hha-badge-success {
+    background: #46b450;
+    color: #fff;
+}
+
+.hha-badge-inactive {
+    background: #ddd;
+    color: #666;
+}
+
+.hha-badge-newbook {
+    background: #0073aa;
+    color: #fff;
+}
+
+.hha-badge-resos {
+    background: #826eb4;
+    color: #fff;
+}
+
+.hha-badge-epos {
+    background: #d54e21;
+    color: #fff;
+}
+
+/* === Settings === */
+.hha-color-picker {
+    max-width: 100px;
+}
+
+.hha-custom-color-row {
+    transition: opacity 0.3s;
+}
+
+/* === Test Connection === */
+.hha-test-connection {
+    margin-left: 8px;
+}
+
+.hha-test-result {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 4px;
+    display: none;
+}
+
+.hha-test-result.success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    display: block;
+}
+
+.hha-test-result.error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    display: block;
+}
+
+/* === Loading States === */
+.hha-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.hha-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #ccc;
+    border-top-color: #0073aa;
+    border-radius: 50%;
+    animation: hha-admin-spin 0.6s linear infinite;
+}
+
+@keyframes hha-admin-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* === Responsive === */
+@media (max-width: 782px) {
+    .hha-tab-link {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .hha-tab-content {
+        padding: 15px;
+    }
+}

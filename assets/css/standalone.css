@@ -1,0 +1,522 @@
+/**
+ * Hotel Hub App - Standalone Styles
+ *
+ * Main styles for the standalone app interface.
+ *
+ * @package Hotel_Hub_App
+ */
+
+/* === Reset and Base === */
+#hha-standalone-app {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--hha-text-color, #333);
+}
+
+#hha-standalone-app * {
+    box-sizing: border-box;
+}
+
+/* === Header === */
+.hha-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--hha-header-bg, #fff);
+    border-bottom: 1px solid var(--hha-border-color, #e0e0e0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hha-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hha-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hha-header-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--hha-primary-color, #2196f3);
+}
+
+.hha-menu-btn,
+.hha-hotel-selector-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s;
+}
+
+.hha-menu-btn:hover,
+.hha-hotel-selector-btn:hover {
+    background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-hotel-selector-btn {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* === Sidebar === */
+.hha-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 300px;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    z-index: 2000;
+}
+
+.hha-sidebar.open {
+    transform: translateX(0);
+}
+
+.hha-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.hha-sidebar.open .hha-sidebar-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.hha-sidebar-content {
+    position: relative;
+    width: 300px;
+    height: 100%;
+    background: var(--hha-sidebar-bg, #fff);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.hha-sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--hha-border-color, #e0e0e0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hha-sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.hha-sidebar-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.hha-sidebar-close:hover {
+    background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-sidebar-user {
+    padding: 16px;
+    border-bottom: 1px solid var(--hha-border-color, #e0e0e0);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hha-user-avatar img {
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+}
+
+.hha-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.hha-user-info strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.hha-user-info span {
+    font-size: 12px;
+    color: var(--hha-text-secondary, #666);
+}
+
+.hha-sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.hha-nav-department {
+    margin-bottom: 8px;
+}
+
+.hha-nav-department-header {
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--hha-text-secondary, #666);
+    letter-spacing: 0.5px;
+}
+
+.hha-nav-module {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hha-nav-module:hover {
+    background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-nav-module.active {
+    background: var(--hha-primary-color, #2196f3);
+    color: #fff;
+}
+
+.hha-nav-module-icon {
+    font-size: 20px;
+}
+
+.hha-nav-module-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.hha-sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--hha-border-color, #e0e0e0);
+}
+
+.hha-logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    width: 100%;
+    background: var(--hha-danger-bg, #f44336);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    text-align: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.hha-logout-btn:hover {
+    opacity: 0.9;
+}
+
+/* === Hotel Selector Modal === */
+.hha-hotel-selector,
+.hha-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3000;
+}
+
+.hha-modal-overlay {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.hha-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    background: var(--hha-bg-color, #fff);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.hha-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--hha-border-color, #e0e0e0);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hha-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.hha-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.hha-modal-close:hover {
+    background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.hha-hotel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hha-hotel-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 2px solid var(--hha-border-color, #e0e0e0);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.hha-hotel-item:hover {
+    background: var(--hha-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.hha-hotel-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hha-hotel-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.hha-hotel-icon .dashicons {
+    font-size: 48px;
+    color: var(--hha-text-secondary, #999);
+}
+
+.hha-hotel-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.hha-hotel-info strong {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.hha-hotel-info span {
+    font-size: 13px;
+    color: var(--hha-text-secondary, #666);
+}
+
+.hha-hotel-active {
+    color: var(--hha-primary-color, #2196f3);
+    font-size: 24px;
+}
+
+/* === Module Container === */
+.hha-module-container {
+    margin-top: 56px;
+    padding: 20px;
+    min-height: calc(100vh - 56px);
+}
+
+.hha-welcome {
+    max-width: 600px;
+    margin: 60px auto;
+    text-align: center;
+}
+
+.hha-welcome-icon {
+    font-size: 80px;
+    color: var(--hha-primary-color, #2196f3);
+    margin-bottom: 20px;
+}
+
+.hha-welcome-icon .dashicons {
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+}
+
+.hha-welcome h2 {
+    font-size: 28px;
+    margin: 0 0 12px;
+}
+
+.hha-welcome p {
+    font-size: 16px;
+    color: var(--hha-text-secondary, #666);
+}
+
+/* === PWA Install Prompt === */
+.hha-install-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1500;
+}
+
+.hha-install-prompt-content {
+    background: var(--hha-bg-color, #fff);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hha-install-prompt .dashicons {
+    font-size: 32px;
+    color: var(--hha-primary-color, #2196f3);
+}
+
+.hha-install-btn {
+    background: var(--hha-primary-color, #2196f3);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.hha-install-dismiss {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+}
+
+/* === Offline Indicator === */
+.hha-offline-indicator {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: #f44336;
+    color: #fff;
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+    z-index: 1100;
+}
+
+.hha-offline-indicator .dashicons {
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* === Loading === */
+.hha-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+}
+
+.hha-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--hha-border-color, #e0e0e0);
+    border-top-color: var(--hha-primary-color, #2196f3);
+    border-radius: 50%;
+    animation: hha-spin 0.8s linear infinite;
+}
+
+@keyframes hha-spin {
+    to { transform: rotate(360deg); }
+}
+
+.hha-loading-nav {
+    padding: 20px;
+    text-align: center;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+    .hha-sidebar-content {
+        width: 280px;
+    }
+
+    .hha-module-container {
+        padding: 16px;
+    }
+}
