@@ -248,77 +248,11 @@ class HHA_Integrations {
      * @return array Result array with 'success' and 'message' keys.
      */
     public function test_newbook_connection($settings) {
-        // Validate required settings
-        if (empty($settings['username']) || empty($settings['password']) || empty($settings['api_key'])) {
-            return array(
-                'success' => false,
-                'message' => 'Missing required credentials (username, password, api_key)',
-            );
-        }
+        // Create NewBook API client instance
+        $api = new HHA_NewBook_API($settings);
 
-        // Default to AU region
-        $region = isset($settings['region']) ? $settings['region'] : 'au';
-
-        // NewBook API base URL (single endpoint, region passed in request body)
-        $base_url = 'https://api.newbook.cloud/rest/';
-
-        // Test with a simple bookings_list request for today
-        $test_date = date('Y-m-d');
-        $data = array(
-            'api_key' => $settings['api_key'],
-            'region' => $region,
-            'period_from' => $test_date . ' 00:00:00',
-            'period_to' => $test_date . ' 23:59:59',
-            'list_type' => 'staying'
-        );
-
-        // Test API connection with bookings_list endpoint
-        $response = wp_remote_post(
-            $base_url . 'bookings_list',
-            array(
-                'timeout' => 10,
-                'headers' => array(
-                    'Content-Type' => 'application/json',
-                    'Authorization' => 'Basic ' . base64_encode($settings['username'] . ':' . $settings['password'])
-                ),
-                'body' => json_encode($data)
-            )
-        );
-
-        if (is_wp_error($response)) {
-            return array(
-                'success' => false,
-                'message' => 'Connection failed: ' . $response->get_error_message(),
-            );
-        }
-
-        $status_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        $response_data = json_decode($response_body, true);
-
-        if ($status_code === 200) {
-            // Check if response has expected NewBook format
-            if (isset($response_data['success'])) {
-                return array(
-                    'success' => true,
-                    'message' => 'Connection successful - API credentials verified',
-                );
-            }
-            return array(
-                'success' => true,
-                'message' => 'Connection successful',
-            );
-        } elseif ($status_code === 401 || $status_code === 403) {
-            return array(
-                'success' => false,
-                'message' => 'Authentication failed - check credentials',
-            );
-        } else {
-            return array(
-                'success' => false,
-                'message' => 'Connection failed with status code: ' . $status_code,
-            );
-        }
+        // Test connection using sites_list endpoint
+        return $api->test_connection();
     }
 
     /**
