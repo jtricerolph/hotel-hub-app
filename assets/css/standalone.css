@@ -395,13 +395,14 @@
 /* === Module Container === */
 .hha-module-container {
     margin-top: 56px;
-    padding: 20px;
+    padding: 0;
     min-height: calc(100vh - 56px);
 }
 
 .hha-welcome {
     max-width: 600px;
     margin: 60px auto;
+    padding: 20px;
     text-align: center;
 }
 
@@ -529,6 +530,6 @@
     }
 
     .hha-module-container {
-        padding: 16px;
+        padding: 0;
     }
 }
