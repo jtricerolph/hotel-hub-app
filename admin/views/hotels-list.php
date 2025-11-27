@@ -25,7 +25,7 @@ if (!defined('ABSPATH')) {
                 <tr>
                     <th style="width: 50px;">Logo</th>
                     <th>Name</th>
-                    <th>Location</th>
+                    <th>Workforce Location</th>
                     <th>Contact</th>
                     <th>Integrations</th>
                     <th>Status</th>
