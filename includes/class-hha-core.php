@@ -292,6 +292,11 @@ class HHA_Core {
             return;
         }
 
+        // Don't redirect unauthenticated users - let them access login naturally
+        if (!is_user_logged_in()) {
+            return;
+        }
+
         // Don't redirect if already on app page
         if ($this->is_app_page()) {
             return;
