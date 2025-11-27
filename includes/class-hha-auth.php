@@ -234,13 +234,8 @@ class HHA_Auth {
             exit;
         }
 
-        if (!$this->user_has_access()) {
-            wp_die(
-                '<h1>Access Denied</h1><p>You do not have permission to access Hotel Hub.</p>',
-                'Access Denied',
-                array('response' => 403)
-            );
-        }
+        // Allow logged-in users through even if they have no modules
+        // The app will show a placeholder message for users without permissions
     }
 
     /**

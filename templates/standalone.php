@@ -168,8 +168,14 @@ $current_hotel_id = hha()->auth->get_current_hotel_id();
             <div class="hha-welcome-icon">
                 <span class="dashicons dashicons-building"></span>
             </div>
-            <h2>Welcome to Hotel Hub</h2>
-            <p>Select a hotel and choose a module from the menu to get started.</p>
+            <?php if (empty($user_modules)) : ?>
+                <h2>No Module Permissions</h2>
+                <p>You currently don't have permission to access any modules.</p>
+                <p style="color: #666; font-size: 14px; margin-top: 20px;">Please contact your administrator to request access.</p>
+            <?php else : ?>
+                <h2>Welcome to Hotel Hub</h2>
+                <p>Select a hotel and choose a module from the menu to get started.</p>
+            <?php endif; ?>
         </div>
     </div>
 
