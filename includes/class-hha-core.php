@@ -297,13 +297,24 @@ class HHA_Core {
             return;
         }
 
+        // Don't redirect custom login page
+        $login_page_id = get_option('hha_login_page_id');
+        if ($login_page_id && is_page($login_page_id)) {
+            return;
+        }
+
         // Don't redirect admin pages
         if (is_admin()) {
             return;
         }
 
-        // Don't redirect login/logout
+        // Don't redirect login/logout/register
         if (in_array($GLOBALS['pagenow'], array('wp-login.php', 'wp-signup.php'))) {
+            return;
+        }
+
+        // Don't redirect WordPress registration and password reset
+        if (isset($_GET['action']) && in_array($_GET['action'], array('register', 'lostpassword', 'rp', 'resetpass'))) {
             return;
         }
 
