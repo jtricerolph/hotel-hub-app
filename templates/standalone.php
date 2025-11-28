@@ -188,6 +188,28 @@ if ($theme_mode === 'dark') {
     <div class="hha-module-container">
         <!-- Module content loaded here -->
         <div class="hha-welcome">
+            <!-- Instruction boxes -->
+            <?php if (!empty($user_modules)) : ?>
+                <?php if (!$current_hotel_id) : ?>
+                    <!-- No hotel selected - show hotel selector instruction -->
+                    <div class="hha-instruction-box hha-instruction-right">
+                        <div class="hha-instruction-content">
+                            <strong>Step 1:</strong> Select a hotel
+                        </div>
+                        <div class="hha-instruction-arrow">→</div>
+                    </div>
+                <?php else : ?>
+                    <!-- Hotel selected - show menu instruction -->
+                    <div class="hha-instruction-box hha-instruction-left">
+                        <div class="hha-instruction-arrow">←</div>
+                        <div class="hha-instruction-content">
+                            <strong>Step 2:</strong> Choose a module
+                        </div>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <!-- Main welcome message -->
             <div class="hha-welcome-icon">
                 <span class="dashicons dashicons-building"></span>
             </div>
@@ -197,7 +219,7 @@ if ($theme_mode === 'dark') {
                 <p style="color: #666; font-size: 14px; margin-top: 20px;">Please contact your administrator to request access.</p>
             <?php else : ?>
                 <h2>Welcome to Hotel Hub</h2>
-                <p>Select a hotel and choose a module from the menu to get started.</p>
+                <p>Your multi-hotel operations hub</p>
             <?php endif; ?>
         </div>
     </div>

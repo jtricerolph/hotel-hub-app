@@ -18,6 +18,7 @@
             this.loadNavigation();
             this.checkOnlineStatus();
             this.initPWA();
+            this.restoreLastModule();
         },
 
         bindEvents: function() {
@@ -149,6 +150,10 @@
                 if (response.success) {
                     this.currentModuleId = moduleId;
                     $('.hha-module-container').html(response.data.content);
+
+                    // Store current module for refresh
+                    localStorage.setItem('hha-last-module', moduleId);
+                    console.log('[HHA] Module loaded and stored:', moduleId);
                 } else {
                     this.showError(response.data.message || 'Failed to load module');
                 }
@@ -156,6 +161,33 @@
                 this.hideLoading();
                 this.showError('Network error. Please try again.');
             });
+        },
+
+        restoreLastModule: function() {
+            const lastModule = localStorage.getItem('hha-last-module');
+
+            if (!lastModule) {
+                console.log('[HHA] No previous module to restore');
+                return;
+            }
+
+            console.log('[HHA] Restoring last module:', lastModule);
+
+            // Wait for navigation to load, then restore the module
+            const checkNav = setInterval(() => {
+                const $moduleItem = $(`.hha-nav-module[data-module-id="${lastModule}"]`);
+
+                if ($moduleItem.length > 0) {
+                    clearInterval(checkNav);
+                    console.log('[HHA] Found module item, loading...');
+                    this.loadModule($moduleItem);
+                }
+            }, 100);
+
+            // Stop checking after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkNav);
+            }, 5000);
         },
 
         showWelcome: function() {

@@ -431,6 +431,7 @@
     margin: 60px auto;
     padding: 20px;
     text-align: center;
+    position: relative;
 }
 
 .hha-welcome-icon {
@@ -453,6 +454,87 @@
 .hha-welcome p {
     font-size: 16px;
     color: var(--hha-text-secondary, #666);
+}
+
+/* Instruction boxes */
+.hha-instruction-box {
+    position: fixed;
+    top: 80px;
+    background: var(--hha-primary-color, #2196f3);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 500;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.hha-instruction-box.hha-instruction-right {
+    right: 20px;
+}
+
+.hha-instruction-box.hha-instruction-left {
+    left: 20px;
+}
+
+.hha-instruction-content {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.hha-instruction-content strong {
+    display: block;
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 2px;
+}
+
+.hha-instruction-arrow {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 600px) {
+    .hha-instruction-box {
+        font-size: 12px;
+        padding: 10px 12px;
+        top: 60px;
+    }
+
+    .hha-instruction-box.hha-instruction-right {
+        right: 12px;
+    }
+
+    .hha-instruction-box.hha-instruction-left {
+        left: 12px;
+    }
+
+    .hha-instruction-content {
+        font-size: 12px;
+    }
+
+    .hha-instruction-content strong {
+        font-size: 11px;
+    }
+
+    .hha-instruction-arrow {
+        font-size: 20px;
+    }
 }
 
 /* === PWA Install Prompt === */
