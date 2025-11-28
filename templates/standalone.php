@@ -100,11 +100,6 @@ if ($theme_mode === 'dark') {
     <!-- Sidebar Menu -->
     <div class="hha-sidebar">
         <div class="hha-sidebar-content">
-            <div class="hha-sidebar-header">
-                <h3>Menu</h3>
-                <button class="hha-sidebar-close" aria-label="Close Menu">×</button>
-            </div>
-
             <div class="hha-sidebar-user">
                 <div class="hha-user-avatar">
                     <?php echo get_avatar($current_user->ID, 48); ?>
