@@ -110,8 +110,11 @@ if (!defined('ABSPATH')) {
 </div>
 
 <style>
+.wp-list-table tbody tr {
+    height: 120px;
+}
+
 .wp-list-table tbody tr td {
-    min-height: 120px;
     vertical-align: middle;
 }
 
