@@ -300,17 +300,27 @@
                     );
                 }
 
-                // Clear local storage (except install dismissed state)
+                // Clear local storage (except install dismissed state and last module)
                 const installDismissed = localStorage.getItem('hha-install-dismissed');
+                const lastModule = localStorage.getItem('hha-last-module');
                 localStorage.clear();
                 if (installDismissed) {
                     localStorage.setItem('hha-install-dismissed', installDismissed);
                 }
+                if (lastModule) {
+                    localStorage.setItem('hha-last-module', lastModule);
+                }
+
+                // Clear session storage
+                sessionStorage.clear();
 
                 console.log('[HHA] Cache cleared, reloading...');
 
-                // Force reload from server
-                window.location.reload(true);
+                // Force hard reload by adding cache-busting parameter
+                // This bypasses browser HTTP cache for all resources
+                const url = new URL(window.location.href);
+                url.searchParams.set('_refresh', Date.now());
+                window.location.href = url.toString();
             } catch (error) {
                 console.error('[HHA] Error clearing cache:', error);
                 alert('Error clearing cache. Please try clearing your browser data manually.');
