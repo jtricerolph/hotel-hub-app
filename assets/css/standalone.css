@@ -86,13 +86,13 @@
 /* === Sidebar === */
 .hha-sidebar {
     position: fixed;
-    top: 0;
+    top: 48px;
     left: 0;
     bottom: 0;
-    width: 300px;
+    width: 280px;
     transform: translateX(-100%);
-    transition: transform 0.3s;
-    z-index: 2000;
+    transition: transform 0.3s ease;
+    z-index: 100;
 }
 
 .hha-sidebar.open {
@@ -100,28 +100,15 @@
 }
 
 .hha-sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s, visibility 0.3s;
-}
-
-.hha-sidebar.open .hha-sidebar-overlay {
-    opacity: 1;
-    visibility: visible;
+    display: none;
 }
 
 .hha-sidebar-content {
     position: relative;
-    width: 300px;
+    width: 280px;
     height: 100%;
     background: var(--hha-sidebar-bg, #fff);
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid var(--hha-border-color, #e0e0e0);
     display: flex;
     flex-direction: column;
 }
@@ -424,6 +411,12 @@
     margin-top: 48px;
     padding: 0;
     min-height: calc(100vh - 48px);
+    transition: transform 0.3s ease;
+}
+
+/* Push content when sidebar is open */
+.hha-sidebar.open ~ .hha-module-container {
+    transform: translateX(280px);
 }
 
 .hha-welcome {
@@ -468,7 +461,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    z-index: 500;
+    z-index: 50;
     animation: pulse 2s ease-in-out infinite;
 }
 
@@ -634,11 +627,35 @@
 
 /* === Responsive === */
 @media (max-width: 768px) {
+    .hha-sidebar {
+        width: 280px;
+    }
+
     .hha-sidebar-content {
         width: 280px;
     }
 
     .hha-module-container {
         padding: 0;
+    }
+
+    /* On mobile, push content with sidebar */
+    .hha-sidebar.open ~ .hha-module-container {
+        transform: translateX(280px);
+    }
+}
+
+/* On very small screens, reduce sidebar width */
+@media (max-width: 480px) {
+    .hha-sidebar {
+        width: 240px;
+    }
+
+    .hha-sidebar-content {
+        width: 240px;
+    }
+
+    .hha-sidebar.open ~ .hha-module-container {
+        transform: translateX(240px);
     }
 }
