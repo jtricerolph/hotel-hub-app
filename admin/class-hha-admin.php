@@ -67,37 +67,33 @@ class HHA_Admin {
             array($this, 'render_settings_page')
         );
 
-        // Add module settings organized by department
-        $this->add_module_settings_menus();
+        // Add modules menu
+        $this->add_modules_menu();
     }
 
     /**
-     * Add module settings menus grouped by department.
+     * Add modules menu with settings pages.
      */
-    private function add_module_settings_menus() {
-        // Get all modules grouped by department
+    private function add_modules_menu() {
+        // Get all modules
         $modules_by_department = hha()->modules->get_modules_by_department_for_admin();
 
         if (empty($modules_by_department)) {
             return;
         }
 
-        // Add department submenus
+        // Add main Modules submenu
+        add_submenu_page(
+            'hotel-hub',
+            'Modules',
+            'Modules',
+            'manage_options',
+            'hotel-hub-modules',
+            array($this, 'render_modules_overview_page')
+        );
+
+        // Add each module's settings pages under Modules
         foreach ($modules_by_department as $department => $modules) {
-            $department_label = hha()->modules->get_department_label($department);
-            $department_slug = 'hotel-hub-modules-' . $department;
-
-            // Add department submenu
-            add_submenu_page(
-                'hotel-hub',
-                $department_label . ' Modules',
-                $department_label . ' Modules',
-                'manage_options',
-                $department_slug,
-                array($this, 'render_module_department_page')
-            );
-
-            // Add each module's settings pages
             foreach ($modules as $module_id => $module) {
                 if (empty($module['settings_pages'])) {
                     continue;
@@ -107,7 +103,7 @@ class HHA_Admin {
                 if (count($module['settings_pages']) === 1) {
                     $page = reset($module['settings_pages']);
                     add_submenu_page(
-                        $department_slug,
+                        'hotel-hub-modules',
                         $page['title'],
                         $page['menu_title'],
                         'manage_options',
@@ -121,7 +117,7 @@ class HHA_Admin {
                     // Add parent module menu
                     $first_page = reset($module['settings_pages']);
                     add_submenu_page(
-                        $department_slug,
+                        'hotel-hub-modules',
                         $module['name'],
                         $module['name'],
                         'manage_options',
@@ -146,15 +142,12 @@ class HHA_Admin {
     }
 
     /**
-     * Render module department overview page.
+     * Render modules overview page (all modules grouped by department).
      */
-    public function render_module_department_page() {
-        $department = isset($_GET['page']) ? str_replace('hotel-hub-modules-', '', sanitize_text_field($_GET['page'])) : '';
-        $modules = hha()->modules->get_modules_by_department_for_admin();
-        $department_modules = isset($modules[$department]) ? $modules[$department] : array();
-        $department_label = hha()->modules->get_department_label($department);
+    public function render_modules_overview_page() {
+        $modules_by_department = hha()->modules->get_modules_by_department_for_admin();
 
-        include HHA_PLUGIN_DIR . 'admin/views/module-department.php';
+        include HHA_PLUGIN_DIR . 'admin/views/modules-overview.php';
     }
 
     /**
