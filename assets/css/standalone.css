@@ -113,7 +113,7 @@
     pointer-events: none;
 }
 
-.hha-sidebar.open .hha-sidebar-overlay {
+.hha-sidebar.open ~ .hha-sidebar-overlay {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;

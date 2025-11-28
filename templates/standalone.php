@@ -99,7 +99,6 @@ if ($theme_mode === 'dark') {
 
     <!-- Sidebar Menu -->
     <div class="hha-sidebar">
-        <div class="hha-sidebar-overlay"></div>
         <div class="hha-sidebar-content">
             <div class="hha-sidebar-header">
                 <h3>Menu</h3>
@@ -145,6 +144,9 @@ if ($theme_mode === 'dark') {
             </div>
         </div>
     </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="hha-sidebar-overlay"></div>
 
     <!-- Hotel Selector Modal -->
     <div class="hha-hotel-selector" style="display: none;">
