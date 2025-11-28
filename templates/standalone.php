@@ -38,12 +38,24 @@ if ($theme_mode === 'dark') {
     <?php wp_head(); ?>
 
     <style>
+        /* Reset HTML and body to remove all spacing */
+        html {
+            margin: 0 !important;
+            padding: 0 !important;
+            margin-top: 0 !important; /* Override WordPress admin bar */
+        }
+
         /* Reset body styles to remove theme interference */
         body {
             margin: 0 !important;
             padding: 0 !important;
             background: var(--hha-bg-color, #f5f5f5) !important;
             overflow-x: hidden;
+        }
+
+        /* Hide WordPress admin bar */
+        #wpadminbar {
+            display: none !important;
         }
 
         /* Hide any theme elements that might leak through */
