@@ -588,8 +588,8 @@ class HHA_AJAX {
         );
 
         $default_icons = array(
-            '-1' => 'cleaning_services',  // Housekeeping
-            '-2' => 'build',              // Maintenance
+            '-1' => 'vacuum',  // Housekeeping
+            '-2' => 'build',   // Maintenance
         );
 
         // Process task types with configuration
