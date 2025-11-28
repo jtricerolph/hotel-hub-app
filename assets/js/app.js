@@ -73,12 +73,17 @@
                 if (response.success) {
                     this.currentHotelId = hotelId;
                     $('.hha-current-hotel-name').text(response.data.hotel.name);
+
+                    // Update active hotel indicator in modal
+                    $('.hha-hotel-item').find('.hha-hotel-active').remove();
+                    $item.append('<span class="dashicons dashicons-yes hha-hotel-active"></span>');
+
                     this.closeHotelSelector();
                     this.loadNavigation();
 
-                    // Clear current module
+                    // Clear current module and show welcome with instruction
                     this.currentModuleId = null;
-                    this.showWelcome();
+                    this.showWelcome(true); // Pass true to indicate hotel is selected
                 }
             });
         },
@@ -190,14 +195,29 @@
             }, 5000);
         },
 
-        showWelcome: function() {
+        showWelcome: function(hotelSelected = false) {
+            let instructionBox = '';
+
+            // Show instruction based on state
+            if (hotelSelected) {
+                instructionBox = `
+                    <div class="hha-instruction-box hha-instruction-left">
+                        <div class="hha-instruction-arrow">←</div>
+                        <div class="hha-instruction-content">
+                            <strong>Step 2:</strong> Choose a module
+                        </div>
+                    </div>
+                `;
+            }
+
             $('.hha-module-container').html(`
                 <div class="hha-welcome">
+                    ${instructionBox}
                     <div class="hha-welcome-icon">
                         <span class="dashicons dashicons-building"></span>
                     </div>
                     <h2>Welcome to Hotel Hub</h2>
-                    <p>Select a module from the menu to get started.</p>
+                    <p>Your multi-hotel operations hub</p>
                 </div>
             `);
         },
