@@ -306,6 +306,107 @@ $page_title = $is_new ? 'Add New Hotel' : 'Edit Hotel';
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <hr style="margin: 30px 0;">
+
+                    <h3>Task Types Configuration</h3>
+                    <p>Configure task types from NewBook for blocking sites on modules.</p>
+
+                    <div id="hha-task-types-management">
+                        <?php
+                        $task_types_data = isset($newbook_settings['task_types']) ? $newbook_settings['task_types'] : array();
+                        ?>
+
+                        <p class="submit">
+                            <button type="button" id="hha-fetch-task-types" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                <span class="dashicons dashicons-download" style="margin-top: 3px;"></span> Fetch Task Types from NewBook
+                            </button>
+                            <?php if (!empty($task_types_data)) : ?>
+                                <button type="button" id="hha-resync-task-types" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                    <span class="dashicons dashicons-update" style="margin-top: 3px;"></span> Resync Task Types
+                                </button>
+                            <?php endif; ?>
+                        </p>
+
+                        <div id="hha-task-types-container">
+                            <?php if (!empty($task_types_data)) : ?>
+                                <table class="wp-list-table widefat fixed striped" id="hha-task-types-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Task Type</th>
+                                            <th style="width: 150px;">Color</th>
+                                            <th style="width: 150px;">Icon</th>
+                                            <th style="width: 100px;">Preview</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($task_types_data as $index => $task_type) : ?>
+                                            <tr data-task-type-index="<?php echo esc_attr($index); ?>">
+                                                <td>
+                                                    <strong><?php echo esc_html($task_type['name']); ?></strong>
+                                                    <br><small>ID: <?php echo esc_html($task_type['id']); ?></small>
+                                                </td>
+                                                <td>
+                                                    <input type="color" class="hha-task-type-color"
+                                                           data-task-type-index="<?php echo esc_attr($index); ?>"
+                                                           value="<?php echo esc_attr(isset($task_type['color']) ? $task_type['color'] : '#9e9e9e'); ?>">
+                                                </td>
+                                                <td>
+                                                    <select class="hha-task-type-icon" data-task-type-index="<?php echo esc_attr($index); ?>">
+                                                        <?php
+                                                        $current_icon = isset($task_type['icon']) ? $task_type['icon'] : 'build';
+                                                        $icons = array(
+                                                            'build' => 'Build (Wrench)',
+                                                            'cleaning_services' => 'Cleaning Services',
+                                                            'event' => 'Event (Calendar)',
+                                                            'meeting_room' => 'Meeting Room',
+                                                            'construction' => 'Construction',
+                                                            'home_repair_service' => 'Home Repair',
+                                                            'plumbing' => 'Plumbing',
+                                                            'electrical_services' => 'Electrical',
+                                                            'ac_unit' => 'AC Unit',
+                                                            'block' => 'Block',
+                                                            'error' => 'Error',
+                                                            'warning' => 'Warning',
+                                                            'info' => 'Info',
+                                                        );
+                                                        foreach ($icons as $value => $label) :
+                                                        ?>
+                                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($current_icon, $value); ?>>
+                                                                <?php echo esc_html($label); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <div class="hha-task-preview"
+                                                         style="background-color: <?php echo esc_attr(isset($task_type['color']) ? $task_type['color'] : '#9e9e9e'); ?>;
+                                                                padding: 8px;
+                                                                border-radius: 3px;
+                                                                color: white;
+                                                                text-align: center;">
+                                                        <span class="material-icons" style="font-size: 18px; vertical-align: middle;">
+                                                            <?php echo esc_html($current_icon); ?>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+
+                                <p class="submit">
+                                    <button type="button" id="hha-save-task-types" class="button button-primary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                        Save Task Types Configuration
+                                    </button>
+                                </p>
+                            <?php else : ?>
+                                <div class="notice notice-info inline">
+                                    <p>Click "Fetch Task Types from NewBook" to load and configure task types.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -644,8 +745,106 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // Task Types Management
+    let taskTypesData = <?php echo !empty($task_types_data) ? json_encode($task_types_data) : '[]'; ?>;
+
+    // Fetch task types from NewBook
+    $('#hha-fetch-task-types, #hha-resync-task-types').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let isResync = $(this).attr('id') === 'hha-resync-task-types';
+        let $button = $(this);
+        let originalText = $button.html();
+
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin" style="margin-top: 3px;"></span> Loading...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_fetch_task_types',
+                hotel_id: hotelId,
+                is_resync: isResync,
+                existing_data: isResync ? JSON.stringify(taskTypesData) : null,
+                nonce: '<?php echo wp_create_nonce('hha_fetch_task_types'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    taskTypesData = response.data.task_types;
+                    location.reload(); // Reload to show updated UI
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to fetch task types. Please try again.');
+                $button.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Update preview when color changes
+    $(document).on('change', '.hha-task-type-color', function() {
+        let index = $(this).data('task-type-index');
+        let color = $(this).val();
+        let $preview = $('tr[data-task-type-index="' + index + '"] .hha-task-preview');
+        $preview.css('background-color', color);
+
+        if (taskTypesData[index]) {
+            taskTypesData[index].color = color;
+        }
+    });
+
+    // Update preview when icon changes
+    $(document).on('change', '.hha-task-type-icon', function() {
+        let index = $(this).data('task-type-index');
+        let icon = $(this).val();
+        let $preview = $('tr[data-task-type-index="' + index + '"] .hha-task-preview .material-icons');
+        $preview.text(icon);
+
+        if (taskTypesData[index]) {
+            taskTypesData[index].icon = icon;
+        }
+    });
+
+    // Save task types configuration
+    $('#hha-save-task-types').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let $button = $(this);
+        let originalText = $button.text();
+
+        $button.prop('disabled', true).text('Saving...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_save_task_types',
+                hotel_id: hotelId,
+                task_types_data: JSON.stringify(taskTypesData),
+                nonce: '<?php echo wp_create_nonce('hha_save_task_types'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Task types configuration saved successfully!');
+                    $button.prop('disabled', false).text(originalText);
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to save task types. Please try again.');
+                $button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
 });
 </script>
+
+<!-- Load Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 <!-- Modal Styles -->
 <style>

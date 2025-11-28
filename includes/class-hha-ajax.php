@@ -31,6 +31,8 @@ class HHA_AJAX {
         add_action('wp_ajax_hha_save_integration', array($this, 'save_integration'));
         add_action('wp_ajax_hha_fetch_newbook_sites', array($this, 'fetch_newbook_sites'));
         add_action('wp_ajax_hha_save_category_sort', array($this, 'save_category_sort'));
+        add_action('wp_ajax_hha_fetch_task_types', array($this, 'fetch_task_types'));
+        add_action('wp_ajax_hha_save_task_types', array($this, 'save_task_types'));
     }
 
     /**
@@ -510,6 +512,180 @@ class HHA_AJAX {
         } else {
             wp_send_json_error(array(
                 'message' => 'Failed to save configuration',
+            ));
+        }
+    }
+
+    /**
+     * Fetch NewBook task types (admin).
+     */
+    public function fetch_task_types() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_fetch_task_types')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $is_resync = isset($_POST['is_resync']) && $_POST['is_resync'];
+        $existing_data = isset($_POST['existing_data']) ? json_decode(stripslashes($_POST['existing_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Create NewBook API instance
+        $api = new HHA_NewBook_API($integration);
+
+        // Fetch task types
+        $response = $api->get_task_types(true);
+
+        if (!$response['success']) {
+            wp_send_json_error(array(
+                'message' => 'Failed to fetch task types: ' . $response['message'],
+            ));
+        }
+
+        $task_types = isset($response['data']) ? $response['data'] : array();
+
+        if (empty($task_types)) {
+            wp_send_json_error(array(
+                'message' => 'No task types found',
+            ));
+        }
+
+        // Build map of existing configuration if resyncing
+        $existing_config_map = array();
+        if ($is_resync && !empty($existing_data)) {
+            foreach ($existing_data as $task_type) {
+                $existing_config_map[$task_type['id']] = $task_type;
+            }
+        }
+
+        // Default colors for common task types
+        $default_colors = array(
+            '-1' => '#4CAF50',  // Housekeeping - Green
+            '-2' => '#FF9800',  // Maintenance - Orange
+        );
+
+        $default_icons = array(
+            '-1' => 'cleaning_services',  // Housekeeping
+            '-2' => 'build',              // Maintenance
+        );
+
+        // Process task types with configuration
+        $task_types_configured = array();
+        foreach ($task_types as $task_type) {
+            $task_id = isset($task_type['id']) ? $task_type['id'] : '';
+            $task_name = isset($task_type['name']) ? $task_type['name'] : '';
+
+            // Get existing configuration or use defaults
+            if (isset($existing_config_map[$task_id])) {
+                $color = $existing_config_map[$task_id]['color'];
+                $icon = $existing_config_map[$task_id]['icon'];
+            } else {
+                $color = isset($default_colors[$task_id]) ? $default_colors[$task_id] : '#9e9e9e';
+                $icon = isset($default_icons[$task_id]) ? $default_icons[$task_id] : 'event';
+            }
+
+            $task_types_configured[] = array(
+                'id'    => $task_id,
+                'name'  => $task_name,
+                'color' => $color,
+                'icon'  => $icon,
+            );
+        }
+
+        // Save to integration settings
+        $integration['task_types'] = $task_types_configured;
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message'    => 'Task types fetched successfully',
+                'task_types' => $task_types_configured,
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save task types',
+            ));
+        }
+    }
+
+    /**
+     * Save task types configuration (admin).
+     */
+    public function save_task_types() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_save_task_types')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $task_types_data = isset($_POST['task_types_data']) ? json_decode(stripslashes($_POST['task_types_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        if (empty($task_types_data)) {
+            wp_send_json_error(array(
+                'message' => 'Task types data required',
+            ));
+        }
+
+        // Get current NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Update task_types in settings
+        $integration['task_types'] = $task_types_data;
+
+        // Save integration with updated task types
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => 'Task types configuration saved successfully',
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save task types configuration',
             ));
         }
     }

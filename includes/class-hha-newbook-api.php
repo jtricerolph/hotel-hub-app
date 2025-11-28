@@ -191,4 +191,49 @@ class HHA_NewBook_API {
             'force_refresh' => $force_refresh
         ));
     }
+
+    /**
+     * Get task types list.
+     *
+     * @param bool $force_refresh Force fresh data from API.
+     * @return array Response array.
+     */
+    public function get_task_types($force_refresh = false) {
+        return $this->call_api('tasks_types_list', array(
+            'force_refresh' => $force_refresh
+        ));
+    }
+
+    /**
+     * Get tasks list.
+     *
+     * @param string $period_from    Start date (YYYY-MM-DD).
+     * @param string $period_to      End date (YYYY-MM-DD).
+     * @param array  $task_type      Task type IDs array (e.g., [-1, -2]).
+     * @param bool   $show_uncomplete Show uncompleted tasks only.
+     * @param string $created_when   Filter by creation date (YYYY-MM-DD).
+     * @param bool   $force_refresh  Force fresh data from API.
+     * @return array Response array.
+     */
+    public function get_tasks($period_from, $period_to, $task_type = array(), $show_uncomplete = true, $created_when = null, $force_refresh = false) {
+        $params = array(
+            'period_from' => $period_from,
+            'period_to' => $period_to,
+            'force_refresh' => $force_refresh
+        );
+
+        if (!empty($task_type)) {
+            $params['task_type'] = $task_type;
+        }
+
+        if ($show_uncomplete) {
+            $params['show_uncomplete'] = 'true';
+        }
+
+        if ($created_when) {
+            $params['created_when'] = $created_when;
+        }
+
+        return $this->call_api('tasks_list', $params);
+    }
 }
