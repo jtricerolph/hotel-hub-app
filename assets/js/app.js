@@ -24,7 +24,7 @@
         bindEvents: function() {
             // Menu toggle
             $('.hha-menu-btn').on('click', () => this.toggleSidebar());
-            $('.hha-sidebar-close').on('click', () => this.closeSidebar());
+            $('.hha-sidebar-close, .hha-sidebar-overlay').on('click', () => this.closeSidebar());
 
             // Hotel selector
             $('.hha-hotel-selector-btn').on('click', () => this.openHotelSelector());
