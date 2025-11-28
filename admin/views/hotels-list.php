@@ -111,7 +111,7 @@ if (!defined('ABSPATH')) {
 
 <style>
 .wp-list-table tbody tr td {
-    min-height: 50px;
+    min-height: 120px;
     vertical-align: middle;
 }
 
