@@ -123,9 +123,8 @@ if ($theme_mode === 'dark') {
             </div>
 
             <div class="hha-sidebar-footer">
-                <button class="hha-reload-btn" id="hha-reload-app">
+                <button class="hha-reload-btn" id="hha-reload-app" aria-label="Reload App">
                     <span class="dashicons dashicons-update"></span>
-                    Reload App
                 </button>
                 <?php
                 $app_url = hha()->auth->get_app_url();
@@ -137,9 +136,8 @@ if ($theme_mode === 'dark') {
                     $app_url
                 );
                 ?>
-                <a href="<?php echo esc_url($logout_url); ?>" class="hha-logout-btn">
+                <a href="<?php echo esc_url($logout_url); ?>" class="hha-logout-btn" aria-label="Logout">
                     <span class="dashicons dashicons-exit"></span>
-                    Logout
                 </a>
             </div>
         </div>
