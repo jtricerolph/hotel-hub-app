@@ -370,7 +370,7 @@ class HHA_AJAX {
         }
 
         foreach ($sites as $site) {
-            $category_name = isset($site['category']) && !empty($site['category']) ? $site['category'] : 'Uncategorized';
+            $category_name = isset($site['category_name']) && !empty($site['category_name']) ? $site['category_name'] : 'Uncategorized';
             $site_id = isset($site['site_id']) ? $site['site_id'] : '';
             $site_name = isset($site['site_name']) ? $site['site_name'] : '';
 
