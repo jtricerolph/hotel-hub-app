@@ -214,6 +214,99 @@ $page_title = $is_new ? 'Add New Hotel' : 'Edit Hotel';
                         <button type="button" class="button hha-test-connection" data-type="newbook">Test Connection</button>
                     </p>
                 </form>
+
+                <?php if ($newbook_integration && $newbook_integration->is_active) : ?>
+                    <hr style="margin: 30px 0;">
+
+                    <h3>Site Categories & Sorting</h3>
+                    <p>Manage how sites are categorized and sorted for modules like Twin Optimiser.</p>
+
+                    <div id="hha-category-management">
+                        <?php
+                        $categories_data = isset($newbook_settings['categories_sort']) ? $newbook_settings['categories_sort'] : array();
+                        ?>
+
+                        <p class="submit">
+                            <button type="button" id="hha-fetch-sites" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                <span class="dashicons dashicons-download" style="margin-top: 3px;"></span> Fetch Sites from NewBook
+                            </button>
+                            <?php if (!empty($categories_data)) : ?>
+                                <button type="button" id="hha-resync-sites" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                    <span class="dashicons dashicons-update" style="margin-top: 3px;"></span> Resync Sites
+                                </button>
+                            <?php endif; ?>
+                        </p>
+
+                        <div id="hha-categories-container">
+                            <?php if (!empty($categories_data)) : ?>
+                                <div class="hha-info-box">
+                                    <p><strong>Instructions:</strong></p>
+                                    <ul style="margin-left: 20px;">
+                                        <li>Drag categories to reorder them</li>
+                                        <li>Click "Sort Sites" to manage the order of sites within each category</li>
+                                        <li>Use checkboxes to exclude categories or sites from modules</li>
+                                        <li>Click "Resync Sites" to update the list when sites are added or changed in NewBook</li>
+                                    </ul>
+                                </div>
+
+                                <table class="wp-list-table widefat fixed striped" id="hha-categories-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 30px;"></th>
+                                            <th>Category</th>
+                                            <th style="width: 100px;">Sites Count</th>
+                                            <th style="width: 120px;">Actions</th>
+                                            <th style="width: 80px;">Exclude</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="hha-sortable-categories">
+                                        <?php foreach ($categories_data as $index => $category) : ?>
+                                            <tr data-category-index="<?php echo esc_attr($index); ?>">
+                                                <td class="hha-drag-handle" style="cursor: move;">
+                                                    <span class="dashicons dashicons-menu"></span>
+                                                </td>
+                                                <td>
+                                                    <strong><?php echo esc_html($category['name']); ?></strong>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $active_sites = isset($category['sites']) ? count(array_filter($category['sites'], function($site) {
+                                                        return empty($site['excluded']);
+                                                    })) : 0;
+                                                    $total_sites = isset($category['sites']) ? count($category['sites']) : 0;
+                                                    echo esc_html($active_sites . ' / ' . $total_sites);
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="button button-small hha-sort-sites"
+                                                            data-category-index="<?php echo esc_attr($index); ?>"
+                                                            data-category-name="<?php echo esc_attr($category['name']); ?>">
+                                                        Sort Sites
+                                                    </button>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <input type="checkbox" class="hha-exclude-category"
+                                                           data-category-index="<?php echo esc_attr($index); ?>"
+                                                           <?php checked(!empty($category['excluded']), true); ?>>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+
+                                <p class="submit">
+                                    <button type="button" id="hha-save-category-sort" class="button button-primary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                        Save Category & Site Configuration
+                                    </button>
+                                </p>
+                            <?php else : ?>
+                                <div class="notice notice-info inline">
+                                    <p>Click "Fetch Sites from NewBook" to load and configure site categories.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- ResOS Integration Tab -->
@@ -328,5 +421,328 @@ jQuery(document).ready(function($) {
         $('.hha-tab-content').removeClass('active');
         $(target).addClass('active');
     });
+
+    // Category/Site Management
+    let categoriesData = <?php echo !empty($categories_data) ? json_encode($categories_data) : '[]'; ?>;
+
+    // Make categories sortable
+    if ($('#hha-sortable-categories').length) {
+        $('#hha-sortable-categories').sortable({
+            handle: '.hha-drag-handle',
+            update: function(event, ui) {
+                updateCategoriesOrder();
+            }
+        });
+    }
+
+    function updateCategoriesOrder() {
+        let newOrder = [];
+        $('#hha-sortable-categories tr').each(function() {
+            let index = $(this).data('category-index');
+            newOrder.push(categoriesData[index]);
+        });
+        categoriesData = newOrder;
+    }
+
+    // Exclude category checkbox
+    $(document).on('change', '.hha-exclude-category', function() {
+        let index = $(this).data('category-index');
+        let currentIndex = $('#hha-sortable-categories tr').index($(this).closest('tr'));
+        if (categoriesData[currentIndex]) {
+            categoriesData[currentIndex].excluded = $(this).is(':checked');
+        }
+    });
+
+    // Fetch sites from NewBook
+    $('#hha-fetch-sites, #hha-resync-sites').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let isResync = $(this).attr('id') === 'hha-resync-sites';
+        let $button = $(this);
+        let originalText = $button.html();
+
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin" style="margin-top: 3px;"></span> Loading...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_fetch_newbook_sites',
+                hotel_id: hotelId,
+                is_resync: isResync,
+                existing_data: isResync ? JSON.stringify(categoriesData) : null,
+                nonce: '<?php echo wp_create_nonce('hha_fetch_sites'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    categoriesData = response.data.categories;
+                    location.reload(); // Reload to show updated UI
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to fetch sites. Please try again.');
+                $button.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Sort sites button
+    $(document).on('click', '.hha-sort-sites', function() {
+        let categoryIndex = $(this).data('category-index');
+        let currentIndex = $('#hha-sortable-categories tr').index($(this).closest('tr'));
+        let category = categoriesData[currentIndex];
+
+        if (!category || !category.sites) {
+            alert('No sites found in this category.');
+            return;
+        }
+
+        showSitesSortModal(currentIndex, category);
+    });
+
+    function showSitesSortModal(categoryIndex, category) {
+        let modalHtml = `
+            <div id="hha-sites-modal" class="hha-modal">
+                <div class="hha-modal-content">
+                    <div class="hha-modal-header">
+                        <h2>Sort Sites: ${category.name}</h2>
+                        <span class="hha-modal-close">&times;</span>
+                    </div>
+                    <div class="hha-modal-body">
+                        <p>Drag sites to reorder them. Use checkboxes to exclude sites from modules.</p>
+                        <table class="wp-list-table widefat fixed striped">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30px;"></th>
+                                    <th>Site Name</th>
+                                    <th style="width: 80px;">Exclude</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hha-sortable-sites">
+        `;
+
+        category.sites.forEach((site, index) => {
+            modalHtml += `
+                <tr data-site-index="${index}">
+                    <td class="hha-drag-handle" style="cursor: move;">
+                        <span class="dashicons dashicons-menu"></span>
+                    </td>
+                    <td>${site.site_name}</td>
+                    <td style="text-align: center;">
+                        <input type="checkbox" class="hha-exclude-site"
+                               data-site-index="${index}"
+                               ${site.excluded ? 'checked' : ''}>
+                    </td>
+                </tr>
+            `;
+        });
+
+        modalHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="hha-modal-footer">
+                        <button type="button" class="button button-primary hha-save-sites-order"
+                                data-category-index="${categoryIndex}">
+                            Save Site Order
+                        </button>
+                        <button type="button" class="button hha-modal-close-btn">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+        $('#hha-sites-modal').fadeIn();
+
+        // Make sites sortable
+        $('#hha-sortable-sites').sortable({
+            handle: '.hha-drag-handle'
+        });
+
+        // Exclude site checkbox
+        $(document).on('change', '.hha-exclude-site', function() {
+            let siteIndex = $(this).data('site-index');
+            let currentSiteIndex = $('#hha-sortable-sites tr').index($(this).closest('tr'));
+            if (category.sites[currentSiteIndex]) {
+                category.sites[currentSiteIndex].excluded = $(this).is(':checked');
+            }
+        });
+    }
+
+    // Save sites order
+    $(document).on('click', '.hha-save-sites-order', function() {
+        let categoryIndex = $(this).data('category-index');
+        let category = categoriesData[categoryIndex];
+
+        let newSitesOrder = [];
+        $('#hha-sortable-sites tr').each(function() {
+            let index = $(this).data('site-index');
+            newSitesOrder.push(category.sites[index]);
+        });
+
+        categoriesData[categoryIndex].sites = newSitesOrder;
+
+        // Update the sites count in the main table
+        let activeCount = newSitesOrder.filter(s => !s.excluded).length;
+        $(`tr[data-category-index="${categoryIndex}"] td:eq(2)`).text(`${activeCount} / ${newSitesOrder.length}`);
+
+        $('#hha-sites-modal').fadeOut(function() {
+            $(this).remove();
+        });
+    });
+
+    // Close modal
+    $(document).on('click', '.hha-modal-close, .hha-modal-close-btn', function() {
+        $('#hha-sites-modal').fadeOut(function() {
+            $(this).remove();
+        });
+    });
+
+    // Save category & site configuration
+    $('#hha-save-category-sort').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let $button = $(this);
+        let originalText = $button.text();
+
+        $button.prop('disabled', true).text('Saving...');
+
+        // Update order indexes
+        updateCategoriesOrder();
+        categoriesData.forEach((category, catIndex) => {
+            category.order = catIndex;
+            if (category.sites) {
+                category.sites.forEach((site, siteIndex) => {
+                    site.order = siteIndex;
+                });
+            }
+        });
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_save_category_sort',
+                hotel_id: hotelId,
+                categories_data: JSON.stringify(categoriesData),
+                nonce: '<?php echo wp_create_nonce('hha_save_category_sort'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Configuration saved successfully!');
+                    $button.prop('disabled', false).text(originalText);
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to save configuration. Please try again.');
+                $button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
 });
 </script>
+
+<!-- Modal Styles -->
+<style>
+.hha-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.hha-modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    border: 1px solid #ccc;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.hha-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    position: relative;
+}
+
+.hha-modal-header h2 {
+    margin: 0;
+    padding-right: 30px;
+}
+
+.hha-modal-close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.hha-modal-close:hover {
+    color: #000;
+}
+
+.hha-modal-body {
+    padding: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.hha-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+}
+
+.hha-modal-footer .button {
+    margin-left: 10px;
+}
+
+.hha-info-box {
+    background: #f0f8ff;
+    border: 1px solid #b8d4e8;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.hha-info-box ul {
+    margin-bottom: 0;
+}
+
+.dashicons-spin {
+    animation: rotation 2s infinite linear;
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+#hha-sortable-categories .ui-sortable-helper {
+    background: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#hha-sortable-sites .ui-sortable-helper {
+    background: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+</style>

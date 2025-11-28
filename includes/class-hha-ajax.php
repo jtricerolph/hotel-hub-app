@@ -29,6 +29,8 @@ class HHA_AJAX {
         add_action('wp_ajax_hha_test_newbook', array($this, 'test_newbook_connection'));
         add_action('wp_ajax_hha_test_resos', array($this, 'test_resos_connection'));
         add_action('wp_ajax_hha_save_integration', array($this, 'save_integration'));
+        add_action('wp_ajax_hha_fetch_newbook_sites', array($this, 'fetch_newbook_sites'));
+        add_action('wp_ajax_hha_save_category_sort', array($this, 'save_category_sort'));
     }
 
     /**
@@ -288,6 +290,221 @@ class HHA_AJAX {
         } else {
             wp_send_json_error(array(
                 'message' => 'Failed to save integration',
+            ));
+        }
+    }
+
+    /**
+     * Fetch NewBook sites and organize by category (admin).
+     */
+    public function fetch_newbook_sites() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_fetch_sites')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $is_resync = isset($_POST['is_resync']) && $_POST['is_resync'];
+        $existing_data = isset($_POST['existing_data']) ? json_decode(stripslashes($_POST['existing_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Create NewBook API instance
+        $api = new HHA_NewBook_API($integration);
+
+        // Fetch sites
+        $response = $api->get_sites(true);
+
+        if (!$response['success']) {
+            wp_send_json_error(array(
+                'message' => 'Failed to fetch sites: ' . $response['message'],
+            ));
+        }
+
+        $sites = isset($response['data']) ? $response['data'] : array();
+
+        if (empty($sites)) {
+            wp_send_json_error(array(
+                'message' => 'No sites found',
+            ));
+        }
+
+        // Organize sites by category
+        $categories = array();
+        $existing_categories_map = array();
+        $existing_sites_map = array();
+
+        // Build map of existing data if resyncing
+        if ($is_resync && !empty($existing_data)) {
+            foreach ($existing_data as $cat_index => $cat) {
+                $existing_categories_map[$cat['name']] = $cat;
+                if (isset($cat['sites'])) {
+                    foreach ($cat['sites'] as $site) {
+                        $site_key = isset($site['site_id']) ? $site['site_id'] : $site['site_name'];
+                        $existing_sites_map[$cat['name']][$site_key] = $site;
+                    }
+                }
+            }
+        }
+
+        foreach ($sites as $site) {
+            $category_name = isset($site['category']) && !empty($site['category']) ? $site['category'] : 'Uncategorized';
+            $site_id = isset($site['site_id']) ? $site['site_id'] : '';
+            $site_name = isset($site['site_name']) ? $site['site_name'] : '';
+
+            // Initialize category if not exists
+            if (!isset($categories[$category_name])) {
+                // Check if category existed before (for resync)
+                $cat_excluded = false;
+                $cat_order = count($categories);
+
+                if (isset($existing_categories_map[$category_name])) {
+                    $cat_excluded = isset($existing_categories_map[$category_name]['excluded']) ? $existing_categories_map[$category_name]['excluded'] : false;
+                    $cat_order = isset($existing_categories_map[$category_name]['order']) ? $existing_categories_map[$category_name]['order'] : $cat_order;
+                }
+
+                $categories[$category_name] = array(
+                    'name'     => $category_name,
+                    'order'    => $cat_order,
+                    'excluded' => $cat_excluded,
+                    'sites'    => array(),
+                );
+            }
+
+            // Check if site existed before (for resync)
+            $site_excluded = false;
+            $site_order = count($categories[$category_name]['sites']);
+
+            $site_key = $site_id ? $site_id : $site_name;
+            if (isset($existing_sites_map[$category_name][$site_key])) {
+                $site_excluded = isset($existing_sites_map[$category_name][$site_key]['excluded']) ? $existing_sites_map[$category_name][$site_key]['excluded'] : false;
+                $site_order = isset($existing_sites_map[$category_name][$site_key]['order']) ? $existing_sites_map[$category_name][$site_key]['order'] : $site_order;
+            }
+
+            // Add site to category
+            $categories[$category_name]['sites'][] = array(
+                'site_id'   => $site_id,
+                'site_name' => $site_name,
+                'order'     => $site_order,
+                'excluded'  => $site_excluded,
+            );
+        }
+
+        // Convert to indexed array and sort by order
+        $categories_array = array_values($categories);
+
+        // Sort categories by order
+        usort($categories_array, function($a, $b) {
+            return $a['order'] - $b['order'];
+        });
+
+        // Sort sites within each category by order then by name
+        foreach ($categories_array as &$category) {
+            usort($category['sites'], function($a, $b) {
+                // If resyncing, use order
+                if (isset($a['order']) && isset($b['order'])) {
+                    if ($a['order'] !== $b['order']) {
+                        return $a['order'] - $b['order'];
+                    }
+                }
+                // Default: sort by site name
+                return strcasecmp($a['site_name'], $b['site_name']);
+            });
+        }
+
+        // Save to integration settings
+        $integration['categories_sort'] = $categories_array;
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message'    => 'Sites fetched successfully',
+                'categories' => $categories_array,
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save categories',
+            ));
+        }
+    }
+
+    /**
+     * Save category and site sort configuration (admin).
+     */
+    public function save_category_sort() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_save_category_sort')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $categories_data = isset($_POST['categories_data']) ? json_decode(stripslashes($_POST['categories_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        if (empty($categories_data)) {
+            wp_send_json_error(array(
+                'message' => 'Categories data required',
+            ));
+        }
+
+        // Get current NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Update categories_sort in settings
+        $integration['categories_sort'] = $categories_data;
+
+        // Save integration with updated categories
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => 'Category and site configuration saved successfully',
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save configuration',
             ));
         }
     }
