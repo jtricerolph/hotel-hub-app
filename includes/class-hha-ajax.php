@@ -356,55 +356,60 @@ class HHA_AJAX {
         $existing_categories_map = array();
         $existing_sites_map = array();
 
-        // Build map of existing data if resyncing
+        // Build map of existing data if resyncing (using IDs as keys)
         if ($is_resync && !empty($existing_data)) {
             foreach ($existing_data as $cat_index => $cat) {
-                $existing_categories_map[$cat['name']] = $cat;
+                $cat_id = isset($cat['id']) ? $cat['id'] : $cat['name']; // Fallback to name for old data
+                $existing_categories_map[$cat_id] = $cat;
                 if (isset($cat['sites'])) {
                     foreach ($cat['sites'] as $site) {
-                        $site_key = isset($site['site_id']) ? $site['site_id'] : $site['site_name'];
-                        $existing_sites_map[$cat['name']][$site_key] = $site;
+                        $site_id = isset($site['site_id']) ? $site['site_id'] : $site['site_name'];
+                        $existing_sites_map[$cat_id][$site_id] = $site;
                     }
                 }
             }
         }
 
         foreach ($sites as $site) {
+            $category_id = isset($site['category_id']) && !empty($site['category_id']) ? $site['category_id'] : '0';
             $category_name = isset($site['category_name']) && !empty($site['category_name']) ? $site['category_name'] : 'Uncategorized';
             $site_id = isset($site['site_id']) ? $site['site_id'] : '';
             $site_name = isset($site['site_name']) ? $site['site_name'] : '';
 
             // Initialize category if not exists
-            if (!isset($categories[$category_name])) {
+            if (!isset($categories[$category_id])) {
                 // Check if category existed before (for resync)
                 $cat_excluded = false;
                 $cat_order = count($categories);
 
-                if (isset($existing_categories_map[$category_name])) {
-                    $cat_excluded = isset($existing_categories_map[$category_name]['excluded']) ? $existing_categories_map[$category_name]['excluded'] : false;
-                    $cat_order = isset($existing_categories_map[$category_name]['order']) ? $existing_categories_map[$category_name]['order'] : $cat_order;
+                if (isset($existing_categories_map[$category_id])) {
+                    $cat_excluded = isset($existing_categories_map[$category_id]['excluded']) ? $existing_categories_map[$category_id]['excluded'] : false;
+                    $cat_order = isset($existing_categories_map[$category_id]['order']) ? $existing_categories_map[$category_id]['order'] : $cat_order;
                 }
 
-                $categories[$category_name] = array(
+                $categories[$category_id] = array(
+                    'id'       => $category_id,
                     'name'     => $category_name,
                     'order'    => $cat_order,
                     'excluded' => $cat_excluded,
                     'sites'    => array(),
                 );
+            } else {
+                // Update category name in case it changed
+                $categories[$category_id]['name'] = $category_name;
             }
 
             // Check if site existed before (for resync)
             $site_excluded = false;
-            $site_order = count($categories[$category_name]['sites']);
+            $site_order = count($categories[$category_id]['sites']);
 
-            $site_key = $site_id ? $site_id : $site_name;
-            if (isset($existing_sites_map[$category_name][$site_key])) {
-                $site_excluded = isset($existing_sites_map[$category_name][$site_key]['excluded']) ? $existing_sites_map[$category_name][$site_key]['excluded'] : false;
-                $site_order = isset($existing_sites_map[$category_name][$site_key]['order']) ? $existing_sites_map[$category_name][$site_key]['order'] : $site_order;
+            if (isset($existing_sites_map[$category_id][$site_id])) {
+                $site_excluded = isset($existing_sites_map[$category_id][$site_id]['excluded']) ? $existing_sites_map[$category_id][$site_id]['excluded'] : false;
+                $site_order = isset($existing_sites_map[$category_id][$site_id]['order']) ? $existing_sites_map[$category_id][$site_id]['order'] : $site_order;
             }
 
             // Add site to category
-            $categories[$category_name]['sites'][] = array(
+            $categories[$category_id]['sites'][] = array(
                 'site_id'   => $site_id,
                 'site_name' => $site_name,
                 'order'     => $site_order,
