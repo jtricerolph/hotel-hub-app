@@ -358,6 +358,12 @@ $page_title = $is_new ? 'Add New Hotel' : 'Edit Hotel';
                                                         $icons = array(
                                                             'build' => 'Build (Wrench)',
                                                             'cleaning_services' => 'Cleaning Services',
+                                                            'room_service' => 'Room Service (Bell)',
+                                                            'vacuum' => 'Vacuum (Hoover)',
+                                                            'engineering' => 'Engineering',
+                                                            'alarm' => 'Alarm',
+                                                            'note_add' => 'Add Notes',
+                                                            'bookmark_added' => 'Bookmark Added',
                                                             'event' => 'Event (Calendar)',
                                                             'meeting_room' => 'Meeting Room',
                                                             'construction' => 'Construction',
@@ -521,7 +527,16 @@ jQuery(document).ready(function($) {
 
         $('.hha-tab-content').removeClass('active');
         $(target).addClass('active');
+
+        // Update URL hash to preserve tab state
+        window.location.hash = target;
     });
+
+    // Restore active tab from URL hash on page load
+    if (window.location.hash) {
+        var hash = window.location.hash;
+        $('.hha-tab-link[href="' + hash + '"]').click();
+    }
 
     // Category/Site Management
     let categoriesData = <?php echo !empty($categories_data) ? json_encode($categories_data) : '[]'; ?>;
@@ -576,7 +591,9 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     categoriesData = response.data.categories;
-                    location.reload(); // Reload to show updated UI
+                    // Preserve current tab on reload
+                    window.location.hash = '#newbook-tab';
+                    location.reload();
                 } else {
                     alert('Error: ' + response.data.message);
                     $button.prop('disabled', false).html(originalText);
@@ -771,7 +788,9 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     taskTypesData = response.data.task_types;
-                    location.reload(); // Reload to show updated UI
+                    // Preserve current tab on reload
+                    window.location.hash = '#newbook-tab';
+                    location.reload();
                 } else {
                     alert('Error: ' + response.data.message);
                     $button.prop('disabled', false).html(originalText);
