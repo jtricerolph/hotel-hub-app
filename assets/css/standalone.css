@@ -92,7 +92,7 @@
     width: 280px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
-    z-index: 1500;
+    z-index: 900;
 }
 
 .hha-sidebar.open {
@@ -105,11 +105,11 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+    background: rgba(0, 0, 0, 0.3);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
-    z-index: 1000;
+    z-index: 800;
     pointer-events: none;
 }
 
@@ -124,7 +124,7 @@
     width: 280px;
     height: 100%;
     background: var(--hha-sidebar-bg, #fff);
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
 }
