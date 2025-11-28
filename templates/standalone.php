@@ -213,7 +213,7 @@ if ($theme_mode === 'dark') {
 
             <!-- Main welcome message -->
             <div class="hha-welcome-icon">
-                <span class="dashicons dashicons-building"></span>
+                <span class="dashicons dashicons-bell"></span>
             </div>
             <?php if (empty($user_modules)) : ?>
                 <h2>No Module Permissions</h2>

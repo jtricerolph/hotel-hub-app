@@ -214,7 +214,7 @@
                 <div class="hha-welcome">
                     ${instructionBox}
                     <div class="hha-welcome-icon">
-                        <span class="dashicons dashicons-building"></span>
+                        <span class="dashicons dashicons-bell"></span>
                     </div>
                     <h2>Welcome to Hotel Hub</h2>
                     <p>Your multi-hotel operations hub</p>
