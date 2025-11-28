@@ -110,6 +110,11 @@ if (!defined('ABSPATH')) {
 </div>
 
 <style>
+.wp-list-table tbody tr td {
+    min-height: 50px;
+    vertical-align: middle;
+}
+
 .hha-badge {
     display: inline-block;
     padding: 3px 8px;
