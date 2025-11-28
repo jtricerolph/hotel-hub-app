@@ -3,7 +3,7 @@
  * Plugin Name: Hotel Hub App
  * Plugin URI: https://github.com/jtricerolph/hotel-hub-app
  * Description: Multi-hotel operations management PWA with department modules and workforce authentication integration
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Joseph Trice-Rolph
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants.
-define('HHA_VERSION', '1.0.0');
+define('HHA_VERSION', '1.0.1');
 define('HHA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('HHA_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('HHA_TABLE_PREFIX', 'hha_');
