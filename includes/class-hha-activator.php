@@ -35,6 +35,7 @@ class HHA_Activator {
             website varchar(200),
             logo_id bigint(20) DEFAULT NULL COMMENT 'WordPress attachment ID',
             icon_id bigint(20) DEFAULT NULL COMMENT 'WordPress attachment ID',
+            default_arrival_time varchar(5) DEFAULT '15:00' COMMENT 'Default arrival time in 24hr format (HH:MM)',
             is_active tinyint(1) DEFAULT 1,
             created_at datetime NOT NULL,
             updated_at datetime NOT NULL,
