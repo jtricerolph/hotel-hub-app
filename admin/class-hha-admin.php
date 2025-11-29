@@ -187,6 +187,14 @@ class HHA_Admin {
         $theme_mode = get_option('hha_theme_mode', 'light');
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
         $frontend_only_mode = get_option('hha_frontend_only_mode', false);
+        $api_logging_enabled = get_option('hha_api_logging_enabled', false);
+
+        // Get log file path if logging is enabled
+        $api_log_file = '';
+        if ($api_logging_enabled) {
+            $upload_dir = wp_upload_dir();
+            $api_log_file = $upload_dir['basedir'] . '/hotel-hub-logs/newbook-api.log';
+        }
 
         include HHA_PLUGIN_DIR . 'admin/views/settings.php';
     }
@@ -337,10 +345,12 @@ class HHA_Admin {
         $theme_mode = sanitize_text_field($_POST['theme_mode']);
         $theme_color = sanitize_hex_color($_POST['theme_primary_color']);
         $frontend_only_mode = isset($_POST['frontend_only_mode']) ? (bool) $_POST['frontend_only_mode'] : false;
+        $api_logging_enabled = isset($_POST['api_logging_enabled']) ? (bool) $_POST['api_logging_enabled'] : false;
 
         update_option('hha_theme_mode', $theme_mode);
         update_option('hha_theme_primary_color', $theme_color);
         update_option('hha_frontend_only_mode', $frontend_only_mode);
+        update_option('hha_api_logging_enabled', $api_logging_enabled);
 
         $this->add_notice('Settings saved successfully', 'success');
     }

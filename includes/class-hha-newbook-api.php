@@ -46,6 +46,9 @@ class HHA_NewBook_API {
      * @return array Response array with 'success', 'data', and 'message' keys.
      */
     public function call_api($endpoint, $params = array()) {
+        // Log API request if logging is enabled
+        $this->log_api_request($endpoint, $params);
+
         // Validate credentials
         if (empty($this->username) || empty($this->password) || empty($this->api_key)) {
             return array(
@@ -235,5 +238,37 @@ class HHA_NewBook_API {
         }
 
         return $this->call_api('tasks_list', $params);
+    }
+
+    /**
+     * Log API request to dedicated log file.
+     *
+     * @param string $endpoint API endpoint.
+     * @param array  $params   Request parameters.
+     */
+    private function log_api_request($endpoint, $params) {
+        // Check if logging is enabled
+        if (!get_option('hha_api_logging_enabled', false)) {
+            return;
+        }
+
+        // Get upload directory
+        $upload_dir = wp_upload_dir();
+        $log_dir = $upload_dir['basedir'] . '/hotel-hub-logs';
+        $log_file = $log_dir . '/newbook-api.log';
+
+        // Create log directory if it doesn't exist
+        if (!file_exists($log_dir)) {
+            wp_mkdir_p($log_dir);
+        }
+
+        // Prepare log entry
+        $timestamp = current_time('Y-m-d H:i:s');
+        $params_json = json_encode($params);
+        $log_entry = sprintf("%s | %s | %s\n", $timestamp, $endpoint, $params_json);
+
+        // Write to log file
+        // Using error_log with destination 3 to append to file
+        error_log($log_entry, 3, $log_file);
     }
 }

@@ -85,6 +85,22 @@ if (!defined('ABSPATH')) {
             </tr>
 
             <tr>
+                <th><label for="api_logging_enabled">NewBook API Logging</label></th>
+                <td>
+                    <input type="checkbox" id="api_logging_enabled" name="api_logging_enabled" value="1"
+                           <?php checked($api_logging_enabled, true); ?>>
+                    <label for="api_logging_enabled">Enable API request logging</label>
+                    <p class="description">
+                        When enabled, all NewBook API requests will be logged to a dedicated file for monitoring and debugging.
+                        Use this during development to track API usage and prevent rate limiting.
+                        <?php if ($api_logging_enabled && $api_log_file): ?>
+                            <br><strong>Log file:</strong> <code><?php echo esc_html($api_log_file); ?></code>
+                        <?php endif; ?>
+                    </p>
+                </td>
+            </tr>
+
+            <tr>
                 <th><label>PWA Manifest</label></th>
                 <td>
                     <p><a href="<?php echo esc_url(home_url('/hotel-hub-manifest.json')); ?>" target="_blank">View Manifest</a></p>
