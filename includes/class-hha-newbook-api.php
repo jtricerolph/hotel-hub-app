@@ -241,6 +241,20 @@ class HHA_NewBook_API {
     }
 
     /**
+     * Update task completion status.
+     *
+     * @param string|int $task_id      NewBook task ID to complete.
+     * @param string     $completed_on Date/time completed (YYYY-MM-DD HH:MM:SS).
+     * @return array Response array with site_status in data.
+     */
+    public function update_task($task_id, $completed_on) {
+        return $this->call_api('tasks_update', array(
+            'task_id' => $task_id,
+            'completed_on' => $completed_on
+        ));
+    }
+
+    /**
      * Log API request to dedicated log file.
      *
      * @param string $endpoint API endpoint.
