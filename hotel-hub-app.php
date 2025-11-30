@@ -120,3 +120,44 @@ register_deactivation_hook(__FILE__, 'hha_deactivate');
 function hha() {
     return HHA_Core::instance();
 }
+
+/**
+ * Get current location/hotel ID for the user.
+ *
+ * This is used by modules to determine which hotel's data to show.
+ * Priority:
+ * 1. Hotel ID from session (if user switched hotels)
+ * 2. User's first available hotel (fallback)
+ * 3. First hotel in system (last resort)
+ *
+ * @return int Hotel/Location ID (never returns 0)
+ */
+function hha_get_current_location() {
+    // Try to get from session first
+    $location_id = hha()->auth->get_current_hotel_id();
+
+    if ($location_id) {
+        return $location_id;
+    }
+
+    // Fallback: Get user's first available hotel
+    $user_id = get_current_user_id();
+
+    if ($user_id && function_exists('wfa_get_user_locations')) {
+        $user_locations = wfa_get_user_locations($user_id);
+        if (!empty($user_locations)) {
+            $first_location = reset($user_locations);
+            return absint($first_location);
+        }
+    }
+
+    // Last resort: Get first active hotel from hotels list
+    $hotels = hha()->hotels->get_active();
+    if (!empty($hotels)) {
+        $first_hotel = reset($hotels);
+        return absint($first_hotel->id);
+    }
+
+    // Absolute fallback - should never happen in production
+    return 1;
+}
