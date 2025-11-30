@@ -208,6 +208,18 @@ class HHA_NewBook_API {
     }
 
     /**
+     * Get note types list.
+     *
+     * @param bool $force_refresh Force fresh data from API.
+     * @return array Response array.
+     */
+    public function get_note_types($force_refresh = false) {
+        return $this->call_api('notes_types', array(
+            'force_refresh' => $force_refresh
+        ));
+    }
+
+    /**
      * Get tasks list.
      *
      * @param string $period_from    Start date (YYYY-MM-DD).

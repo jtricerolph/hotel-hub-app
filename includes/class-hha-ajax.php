@@ -33,6 +33,8 @@ class HHA_AJAX {
         add_action('wp_ajax_hha_save_category_sort', array($this, 'save_category_sort'));
         add_action('wp_ajax_hha_fetch_task_types', array($this, 'fetch_task_types'));
         add_action('wp_ajax_hha_save_task_types', array($this, 'save_task_types'));
+        add_action('wp_ajax_hha_fetch_note_types', array($this, 'fetch_note_types'));
+        add_action('wp_ajax_hha_save_note_types', array($this, 'save_note_types'));
     }
 
     /**
@@ -686,6 +688,182 @@ class HHA_AJAX {
         } else {
             wp_send_json_error(array(
                 'message' => 'Failed to save task types configuration',
+            ));
+        }
+    }
+
+    /**
+     * Fetch NewBook note types (admin).
+     */
+    public function fetch_note_types() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_fetch_note_types')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $is_resync = isset($_POST['is_resync']) && $_POST['is_resync'];
+        $existing_data = isset($_POST['existing_data']) ? json_decode(stripslashes($_POST['existing_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        // Get NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Create NewBook API instance
+        $api = new HHA_NewBook_API($integration);
+
+        // Fetch note types
+        $response = $api->get_note_types(true);
+
+        if (!$response['success']) {
+            wp_send_json_error(array(
+                'message' => 'Failed to fetch note types: ' . $response['message'],
+            ));
+        }
+
+        $note_types = isset($response['data']) ? $response['data'] : array();
+
+        if (empty($note_types)) {
+            wp_send_json_error(array(
+                'message' => 'No note types found',
+            ));
+        }
+
+        // Build map of existing configuration if resyncing
+        $existing_config_map = array();
+        if ($is_resync && !empty($existing_data)) {
+            foreach ($existing_data as $note_type) {
+                $existing_config_map[$note_type['id']] = $note_type;
+            }
+        }
+
+        // Default colors for common note types
+        $default_colors = array(
+            '1' => '#2196F3',  // Information - Blue
+            '2' => '#FF9800',  // Warning - Orange
+        );
+
+        $default_icons = array(
+            '1' => 'info',     // Information
+            '2' => 'warning',  // Warning
+        );
+
+        // Process note types with configuration
+        $note_types_configured = array();
+        foreach ($note_types as $note_type) {
+            $note_id = isset($note_type['note_type_id']) ? $note_type['note_type_id'] : '';
+            $note_name = isset($note_type['note_type_name']) ? $note_type['note_type_name'] : '';
+            $note_default = isset($note_type['note_type_default']) ? $note_type['note_type_default'] : '0';
+
+            // Get existing configuration or use defaults
+            if (isset($existing_config_map[$note_id])) {
+                $color = $existing_config_map[$note_id]['color'];
+                $icon = $existing_config_map[$note_id]['icon'];
+            } else {
+                $color = isset($default_colors[$note_id]) ? $default_colors[$note_id] : '#9e9e9e';
+                $icon = isset($default_icons[$note_id]) ? $default_icons[$note_id] : 'note_add';
+            }
+
+            $note_types_configured[] = array(
+                'id'      => $note_id,
+                'name'    => $note_name,
+                'default' => $note_default,
+                'color'   => $color,
+                'icon'    => $icon,
+            );
+        }
+
+        // Save to integration settings
+        $integration['note_types'] = $note_types_configured;
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message'    => 'Note types fetched successfully',
+                'note_types' => $note_types_configured,
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save note types',
+            ));
+        }
+    }
+
+    /**
+     * Save note types configuration (admin).
+     */
+    public function save_note_types() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_save_note_types')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
+        $note_types_data = isset($_POST['note_types_data']) ? json_decode(stripslashes($_POST['note_types_data']), true) : array();
+
+        if (!$hotel_id) {
+            wp_send_json_error(array(
+                'message' => 'Hotel ID required',
+            ));
+        }
+
+        if (empty($note_types_data)) {
+            wp_send_json_error(array(
+                'message' => 'Note types data required',
+            ));
+        }
+
+        // Get current NewBook integration settings
+        $integration = hha()->integrations->get_settings($hotel_id, 'newbook');
+
+        if (!$integration) {
+            wp_send_json_error(array(
+                'message' => 'NewBook integration not configured',
+            ));
+        }
+
+        // Update note_types in settings
+        $integration['note_types'] = $note_types_data;
+
+        // Save integration with updated note types
+        $result = hha()->integrations->save($hotel_id, 'newbook', $integration, true);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => 'Note types configuration saved successfully',
+            ));
+        } else {
+            wp_send_json_error(array(
+                'message' => 'Failed to save note types configuration',
             ));
         }
     }

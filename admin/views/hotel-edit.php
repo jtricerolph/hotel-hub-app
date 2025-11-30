@@ -423,6 +423,117 @@ $page_title = $is_new ? 'Add New Hotel' : 'Edit Hotel';
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <hr style="margin: 30px 0;">
+
+                    <h3>Note Types Configuration</h3>
+                    <p>Configure note types from NewBook for displaying notes with colors and icons.</p>
+
+                    <div id="hha-note-types-management">
+                        <?php
+                        $note_types_data = isset($newbook_settings['note_types']) ? $newbook_settings['note_types'] : array();
+                        ?>
+
+                        <p class="submit">
+                            <button type="button" id="hha-fetch-note-types" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                <span class="dashicons dashicons-download" style="margin-top: 3px;"></span> Fetch Note Types from NewBook
+                            </button>
+                            <?php if (!empty($note_types_data)) : ?>
+                                <button type="button" id="hha-resync-note-types" class="button button-secondary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                    <span class="dashicons dashicons-update" style="margin-top: 3px;"></span> Resync Note Types
+                                </button>
+                            <?php endif; ?>
+                        </p>
+
+                        <div id="hha-note-types-container">
+                            <?php if (!empty($note_types_data)) : ?>
+                                <table class="wp-list-table widefat fixed striped" id="hha-note-types-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Note Type</th>
+                                            <th style="width: 150px;">Color</th>
+                                            <th style="width: 150px;">Icon</th>
+                                            <th style="width: 100px;">Preview</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($note_types_data as $index => $note_type) : ?>
+                                            <tr data-note-type-index="<?php echo esc_attr($index); ?>">
+                                                <td>
+                                                    <strong><?php echo esc_html($note_type['name']); ?></strong>
+                                                    <br><small>ID: <?php echo esc_html($note_type['id']); ?></small>
+                                                    <?php if (isset($note_type['default']) && $note_type['default'] === '1') : ?>
+                                                        <br><span class="dashicons dashicons-star-filled" style="color: #f39c12;" title="Default note type"></span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <input type="color" class="hha-note-type-color"
+                                                           data-note-type-index="<?php echo esc_attr($index); ?>"
+                                                           value="<?php echo esc_attr(isset($note_type['color']) ? $note_type['color'] : '#9e9e9e'); ?>">
+                                                </td>
+                                                <td>
+                                                    <select class="hha-note-type-icon" data-note-type-index="<?php echo esc_attr($index); ?>">
+                                                        <?php
+                                                        $current_icon = isset($note_type['icon']) ? $note_type['icon'] : 'note_add';
+                                                        $icons = array(
+                                                            'note_add' => 'Add Notes',
+                                                            'info' => 'Info',
+                                                            'warning' => 'Warning',
+                                                            'error' => 'Error',
+                                                            'check_circle' => 'Check Circle',
+                                                            'announcement' => 'Announcement',
+                                                            'campaign' => 'Campaign',
+                                                            'flag' => 'Flag',
+                                                            'star' => 'Star',
+                                                            'bookmark' => 'Bookmark',
+                                                            'bookmark_added' => 'Bookmark Added',
+                                                            'notifications' => 'Notifications',
+                                                            'notifications_active' => 'Notifications Active',
+                                                            'priority_high' => 'Priority High',
+                                                            'report_problem' => 'Report Problem',
+                                                            'verified' => 'Verified',
+                                                            'new_releases' => 'New Releases',
+                                                            'tips_and_updates' => 'Tips and Updates',
+                                                            'lightbulb' => 'Lightbulb',
+                                                            'help' => 'Help',
+                                                        );
+                                                        foreach ($icons as $value => $label) :
+                                                        ?>
+                                                            <option value="<?php echo esc_attr($value); ?>" <?php selected($current_icon, $value); ?>>
+                                                                <?php echo esc_html($label); ?>
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <div class="hha-note-preview"
+                                                         style="background-color: <?php echo esc_attr(isset($note_type['color']) ? $note_type['color'] : '#9e9e9e'); ?>;
+                                                                padding: 8px;
+                                                                border-radius: 3px;
+                                                                color: white;
+                                                                text-align: center;">
+                                                        <span class="material-icons" style="font-size: 18px; vertical-align: middle;">
+                                                            <?php echo esc_html($current_icon); ?>
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+
+                                <p class="submit">
+                                    <button type="button" id="hha-save-note-types" class="button button-primary" data-hotel-id="<?php echo esc_attr($hotel->id); ?>">
+                                        Save Note Types Configuration
+                                    </button>
+                                </p>
+                            <?php else : ?>
+                                <div class="notice notice-info inline">
+                                    <p>Click "Fetch Note Types from NewBook" to load and configure note types.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
 
@@ -865,6 +976,103 @@ jQuery(document).ready(function($) {
             },
             error: function() {
                 alert('Failed to save task types. Please try again.');
+                $button.prop('disabled', false).text(originalText);
+            }
+        });
+    });
+
+    // Note Types Management
+    let noteTypesData = <?php echo !empty($note_types_data) ? json_encode($note_types_data) : '[]'; ?>;
+
+    // Fetch note types from NewBook
+    $('#hha-fetch-note-types, #hha-resync-note-types').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let isResync = $(this).attr('id') === 'hha-resync-note-types';
+        let $button = $(this);
+        let originalText = $button.html();
+
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update dashicons-spin" style="margin-top: 3px;"></span> Loading...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_fetch_note_types',
+                hotel_id: hotelId,
+                is_resync: isResync,
+                existing_data: isResync ? JSON.stringify(noteTypesData) : null,
+                nonce: '<?php echo wp_create_nonce('hha_fetch_note_types'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    noteTypesData = response.data.note_types;
+                    // Preserve current tab on reload
+                    window.location.hash = '#newbook-tab';
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).html(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to fetch note types. Please try again.');
+                $button.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Update preview when color changes
+    $(document).on('change', '.hha-note-type-color', function() {
+        let index = $(this).data('note-type-index');
+        let color = $(this).val();
+        let $preview = $('tr[data-note-type-index="' + index + '"] .hha-note-preview');
+        $preview.css('background-color', color);
+
+        if (noteTypesData[index]) {
+            noteTypesData[index].color = color;
+        }
+    });
+
+    // Update preview when icon changes
+    $(document).on('change', '.hha-note-type-icon', function() {
+        let index = $(this).data('note-type-index');
+        let icon = $(this).val();
+        let $preview = $('tr[data-note-type-index="' + index + '"] .hha-note-preview .material-icons');
+        $preview.text(icon);
+
+        if (noteTypesData[index]) {
+            noteTypesData[index].icon = icon;
+        }
+    });
+
+    // Save note types configuration
+    $('#hha-save-note-types').on('click', function() {
+        let hotelId = $(this).data('hotel-id');
+        let $button = $(this);
+        let originalText = $button.text();
+
+        $button.prop('disabled', true).text('Saving...');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'hha_save_note_types',
+                hotel_id: hotelId,
+                note_types_data: JSON.stringify(noteTypesData),
+                nonce: '<?php echo wp_create_nonce('hha_save_note_types'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Note types configuration saved successfully!');
+                    $button.prop('disabled', false).text(originalText);
+                } else {
+                    alert('Error: ' + response.data.message);
+                    $button.prop('disabled', false).text(originalText);
+                }
+            },
+            error: function() {
+                alert('Failed to save note types. Please try again.');
                 $button.prop('disabled', false).text(originalText);
             }
         });
