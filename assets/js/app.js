@@ -156,6 +156,9 @@
                     this.currentModuleId = moduleId;
                     $('.hha-module-container').html(response.data.content);
 
+                    // Trigger custom event for modules that need to re-initialize
+                    $(document).trigger('hha-module-loaded', [moduleId]);
+
                     // Store current module for refresh
                     localStorage.setItem('hha-last-module', moduleId);
                     console.log('[HHA] Module loaded and stored:', moduleId);
