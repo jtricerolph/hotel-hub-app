@@ -67,6 +67,16 @@ class HHA_Admin {
             array($this, 'render_settings_page')
         );
 
+        // Reports
+        add_submenu_page(
+            'hotel-hub',
+            'Reports',
+            'Reports',
+            'manage_options',
+            'hotel-hub-reports',
+            array($this, 'render_reports_page')
+        );
+
         // Add modules menu
         $this->add_modules_menu();
     }
@@ -197,6 +207,20 @@ class HHA_Admin {
         }
 
         include HHA_PLUGIN_DIR . 'admin/views/settings.php';
+    }
+
+    /**
+     * Render reports page.
+     */
+    public function render_reports_page() {
+        // Check if viewing a specific report
+        if (isset($_GET['report'])) {
+            $report_id = sanitize_text_field($_GET['report']);
+            hha()->reports->render_report($report_id);
+        } else {
+            // Show reports overview
+            hha()->reports->render_reports_page();
+        }
     }
 
     /**

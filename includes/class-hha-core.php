@@ -59,6 +59,7 @@ class HHA_Core {
         $this->components['pwa']          = new HHA_PWA();
         $this->components['ajax']         = new HHA_AJAX();
         $this->components['auth']         = new HHA_Auth();
+        $this->components['reports']      = new HHA_Reports();
 
         // Admin components (only in admin)
         if (is_admin()) {
