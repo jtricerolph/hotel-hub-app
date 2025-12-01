@@ -269,7 +269,7 @@ class HHA_NewBook_API {
     /**
      * Update site status only (Clean/Dirty/Inspected).
      *
-     * IMPORTANT: Only sends site_id and site_status parameters to avoid
+     * IMPORTANT: Only sends site_id and status parameters to avoid
      * accidentally updating other site settings.
      *
      * @param string $site_id      NewBook site ID.
@@ -279,7 +279,7 @@ class HHA_NewBook_API {
     public function update_site_status($site_id, $site_status) {
         return $this->call_api('sites_update', array(
             'site_id' => $site_id,
-            'site_status' => $site_status
+            'status' => $site_status  // NewBook API expects 'status', not 'site_status'
         ));
     }
 
