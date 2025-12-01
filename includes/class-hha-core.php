@@ -112,14 +112,22 @@ class HHA_Core {
         $theme_mode = get_option('hha_theme_mode', 'light');
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
 
-        // Enqueue dashicons for module icons and UI elements
+        // Enqueue dashicons for UI elements
         wp_enqueue_style('dashicons');
+
+        // Enqueue Material Symbols for module icons
+        wp_enqueue_style(
+            'material-symbols',
+            'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+            array(),
+            null
+        );
 
         // Enqueue styles
         wp_enqueue_style(
             'hha-standalone',
             HHA_PLUGIN_URL . 'assets/css/standalone.css',
-            array('dashicons'),
+            array('dashicons', 'material-symbols'),
             HHA_VERSION
         );
 

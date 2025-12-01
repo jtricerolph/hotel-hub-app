@@ -117,7 +117,7 @@
                 dept.modules.forEach(module => {
                     const $module = $(`
                         <div class="hha-nav-module" data-module-id="${module.id}">
-                            <span class="hha-nav-module-icon ${module.icon}"></span>
+                            <span class="hha-nav-module-icon material-symbols-outlined">${module.icon}</span>
                             <span class="hha-nav-module-name">${module.name}</span>
                         </div>
                     `);

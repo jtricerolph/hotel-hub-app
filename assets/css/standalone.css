@@ -228,7 +228,8 @@
 }
 
 .hha-nav-module-icon {
-    font-size: 20px;
+    font-size: 24px;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .hha-nav-module-name {
