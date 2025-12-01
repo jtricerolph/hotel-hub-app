@@ -112,11 +112,14 @@ class HHA_Core {
         $theme_mode = get_option('hha_theme_mode', 'light');
         $theme_color = get_option('hha_theme_primary_color', '#2196f3');
 
+        // Enqueue dashicons for module icons and UI elements
+        wp_enqueue_style('dashicons');
+
         // Enqueue styles
         wp_enqueue_style(
             'hha-standalone',
             HHA_PLUGIN_URL . 'assets/css/standalone.css',
-            array(),
+            array('dashicons'),
             HHA_VERSION
         );
 
