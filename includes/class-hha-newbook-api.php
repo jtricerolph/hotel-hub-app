@@ -267,6 +267,23 @@ class HHA_NewBook_API {
     }
 
     /**
+     * Update site status only (Clean/Dirty/Inspected).
+     *
+     * IMPORTANT: Only sends site_id and site_status parameters to avoid
+     * accidentally updating other site settings.
+     *
+     * @param string $site_id      NewBook site ID.
+     * @param string $site_status  New status (Clean/Dirty/Inspected).
+     * @return array Response array.
+     */
+    public function update_site_status($site_id, $site_status) {
+        return $this->call_api('sites_update', array(
+            'site_id' => $site_id,
+            'site_status' => $site_status
+        ));
+    }
+
+    /**
      * Log API request to dedicated log file.
      *
      * @param string $endpoint API endpoint.
