@@ -265,14 +265,16 @@ class HHA_Admin {
         $hotel_id = isset($_POST['hotel_id']) ? absint($_POST['hotel_id']) : 0;
 
         $hotel_data = array(
-            'location_id' => isset($_POST['location_id']) ? absint($_POST['location_id']) : null,
-            'name'        => sanitize_text_field($_POST['name']),
-            'address'     => sanitize_textarea_field($_POST['address']),
-            'phone'       => sanitize_text_field($_POST['phone']),
-            'website'     => esc_url_raw($_POST['website']),
-            'logo_id'     => isset($_POST['logo_id']) ? absint($_POST['logo_id']) : null,
-            'icon_id'     => isset($_POST['icon_id']) ? absint($_POST['icon_id']) : null,
-            'is_active'   => isset($_POST['is_active']) ? 1 : 0,
+            'location_id'            => isset($_POST['location_id']) ? absint($_POST['location_id']) : null,
+            'name'                   => sanitize_text_field($_POST['name']),
+            'address'                => sanitize_textarea_field($_POST['address']),
+            'phone'                  => sanitize_text_field($_POST['phone']),
+            'website'                => esc_url_raw($_POST['website']),
+            'logo_id'                => isset($_POST['logo_id']) ? absint($_POST['logo_id']) : null,
+            'icon_id'                => isset($_POST['icon_id']) ? absint($_POST['icon_id']) : null,
+            'default_arrival_time'   => isset($_POST['default_arrival_time']) ? sanitize_text_field($_POST['default_arrival_time']) : '15:00',
+            'default_departure_time' => isset($_POST['default_departure_time']) ? sanitize_text_field($_POST['default_departure_time']) : '10:00',
+            'is_active'              => isset($_POST['is_active']) ? 1 : 0,
         );
 
         // Process uploaded images
