@@ -44,6 +44,10 @@ class HHA_Core {
      * Private constructor - use instance() instead.
      */
     private function __construct() {
+        // Check for database upgrades
+        require_once HHA_PLUGIN_DIR . 'includes/class-hha-activator.php';
+        HHA_Activator::check_upgrade();
+
         $this->init_components();
         $this->init_hooks();
     }

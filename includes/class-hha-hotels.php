@@ -122,18 +122,19 @@ class HHA_Hotels {
 
         // Prepare hotel data
         $hotel_data = array(
-            'location_id'          => isset($data['location_id']) ? absint($data['location_id']) : null,
-            'name'                 => sanitize_text_field($data['name']),
-            'slug'                 => $slug,
-            'address'              => isset($data['address']) ? sanitize_textarea_field($data['address']) : '',
-            'phone'                => isset($data['phone']) ? sanitize_text_field($data['phone']) : '',
-            'website'              => isset($data['website']) ? esc_url_raw($data['website']) : '',
-            'logo_id'              => isset($data['logo_id']) ? absint($data['logo_id']) : null,
-            'icon_id'              => isset($data['icon_id']) ? absint($data['icon_id']) : null,
-            'default_arrival_time' => isset($data['default_arrival_time']) ? sanitize_text_field($data['default_arrival_time']) : '15:00',
-            'is_active'            => isset($data['is_active']) ? (int) $data['is_active'] : 1,
-            'created_at'           => current_time('mysql'),
-            'updated_at'           => current_time('mysql'),
+            'location_id'            => isset($data['location_id']) ? absint($data['location_id']) : null,
+            'name'                   => sanitize_text_field($data['name']),
+            'slug'                   => $slug,
+            'address'                => isset($data['address']) ? sanitize_textarea_field($data['address']) : '',
+            'phone'                  => isset($data['phone']) ? sanitize_text_field($data['phone']) : '',
+            'website'                => isset($data['website']) ? esc_url_raw($data['website']) : '',
+            'logo_id'                => isset($data['logo_id']) ? absint($data['logo_id']) : null,
+            'icon_id'                => isset($data['icon_id']) ? absint($data['icon_id']) : null,
+            'default_arrival_time'   => isset($data['default_arrival_time']) ? sanitize_text_field($data['default_arrival_time']) : '15:00',
+            'default_departure_time' => isset($data['default_departure_time']) ? sanitize_text_field($data['default_departure_time']) : '10:00',
+            'is_active'              => isset($data['is_active']) ? (int) $data['is_active'] : 1,
+            'created_at'             => current_time('mysql'),
+            'updated_at'             => current_time('mysql'),
         );
 
         // Insert into database
@@ -150,6 +151,7 @@ class HHA_Hotels {
                 '%d', // logo_id
                 '%d', // icon_id
                 '%s', // default_arrival_time
+                '%s', // default_departure_time
                 '%d', // is_active
                 '%s', // created_at
                 '%s', // updated_at
@@ -216,6 +218,10 @@ class HHA_Hotels {
 
         if (isset($data['default_arrival_time'])) {
             $update_data['default_arrival_time'] = sanitize_text_field($data['default_arrival_time']);
+        }
+
+        if (isset($data['default_departure_time'])) {
+            $update_data['default_departure_time'] = sanitize_text_field($data['default_departure_time']);
         }
 
         if (isset($data['is_active'])) {

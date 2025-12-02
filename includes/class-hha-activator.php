@@ -36,6 +36,7 @@ class HHA_Activator {
             logo_id bigint(20) DEFAULT NULL COMMENT 'WordPress attachment ID',
             icon_id bigint(20) DEFAULT NULL COMMENT 'WordPress attachment ID',
             default_arrival_time varchar(5) DEFAULT '15:00' COMMENT 'Default arrival time in 24hr format (HH:MM)',
+            default_departure_time varchar(5) DEFAULT '10:00' COMMENT 'Default departure time in 24hr format (HH:MM)',
             is_active tinyint(1) DEFAULT 1,
             created_at datetime NOT NULL,
             updated_at datetime NOT NULL,
@@ -93,6 +94,38 @@ class HHA_Activator {
 
         // Flush rewrite rules
         flush_rewrite_rules();
+    }
+
+    /**
+     * Check if database upgrade is needed and run migrations.
+     */
+    public static function check_upgrade() {
+        $installed_version = get_option('hha_version', '0.0.0');
+
+        if (version_compare($installed_version, HHA_VERSION, '<')) {
+            self::upgrade_database($installed_version);
+            update_option('hha_version', HHA_VERSION);
+        }
+    }
+
+    /**
+     * Upgrade database schema for new versions.
+     *
+     * @param string $from_version The version upgrading from.
+     */
+    private static function upgrade_database($from_version) {
+        global $wpdb;
+        $table_prefix = $wpdb->prefix . HHA_TABLE_PREFIX;
+
+        // Upgrade to 1.0.4: Add default_departure_time column
+        if (version_compare($from_version, '1.0.4', '<')) {
+            $wpdb->query(
+                "ALTER TABLE {$table_prefix}hotels
+                ADD COLUMN default_departure_time varchar(5) DEFAULT '10:00'
+                COMMENT 'Default departure time in 24hr format (HH:MM)'
+                AFTER default_arrival_time"
+            );
+        }
     }
 
     /**

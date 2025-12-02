@@ -140,6 +140,15 @@ $page_title = $is_new ? 'Add New Hotel' : 'Edit Hotel';
                     </tr>
 
                     <tr>
+                        <th><label for="default_departure_time">Default Departure Time</label></th>
+                        <td>
+                            <input type="time" id="default_departure_time" name="default_departure_time"
+                                   value="<?php echo $hotel && isset($hotel->default_departure_time) ? esc_attr($hotel->default_departure_time) : '10:00'; ?>">
+                            <p class="description">Default check-out time in 24-hour format. Used to highlight late departures.</p>
+                        </td>
+                    </tr>
+
+                    <tr>
                         <th><label for="is_active">Status</label></th>
                         <td>
                             <label>
