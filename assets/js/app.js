@@ -44,6 +44,22 @@
             // Online/offline events
             window.addEventListener('online', () => this.setOnlineStatus(true));
             window.addEventListener('offline', () => this.setOnlineStatus(false));
+
+            // Trigger heartbeat on wake from standby - benefits ALL modules
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && typeof wp !== 'undefined' && wp.heartbeat) {
+                    console.log('[HHA] Page became visible, triggering immediate heartbeat');
+                    wp.heartbeat.connectNow();
+                }
+            });
+
+            // Fallback for window focus
+            window.addEventListener('focus', function() {
+                if (typeof wp !== 'undefined' && wp.heartbeat) {
+                    console.log('[HHA] Window gained focus, triggering immediate heartbeat');
+                    wp.heartbeat.connectNow();
+                }
+            });
         },
 
         toggleSidebar: function() {
