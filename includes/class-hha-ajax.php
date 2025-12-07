@@ -24,6 +24,7 @@ class HHA_AJAX {
         add_action('wp_ajax_hha_set_current_hotel', array($this, 'set_current_hotel'));
         add_action('wp_ajax_hha_load_module', array($this, 'load_module'));
         add_action('wp_ajax_hha_get_navigation', array($this, 'get_navigation'));
+        add_action('wp_ajax_hha_check_session', array($this, 'check_session'));
 
         // Admin AJAX actions
         add_action('wp_ajax_hha_test_newbook', array($this, 'test_newbook_connection'));
@@ -198,6 +199,40 @@ class HHA_AJAX {
 
         wp_send_json_success(array(
             'navigation' => $navigation,
+        ));
+    }
+
+    /**
+     * Check if session is still valid.
+     * Used when app resumes from background to verify authentication.
+     */
+    public function check_session() {
+        check_ajax_referer('hha-app', 'nonce');
+
+        $user_id = get_current_user_id();
+
+        if (!$user_id) {
+            wp_send_json_error(array(
+                'message' => 'Session expired',
+                'code'    => 'session_expired',
+            ), 401);
+        }
+
+        // Check if user still has access
+        if (!hha()->components['auth']->user_has_access()) {
+            wp_send_json_error(array(
+                'message' => 'Access denied',
+                'code'    => 'access_denied',
+            ), 403);
+        }
+
+        // Get current hotel from session
+        $hotel_id = hha()->components['auth']->get_current_hotel_id();
+
+        wp_send_json_success(array(
+            'valid'    => true,
+            'user_id'  => $user_id,
+            'hotel_id' => $hotel_id,
         ));
     }
 

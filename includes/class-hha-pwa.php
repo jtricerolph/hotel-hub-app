@@ -264,7 +264,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - network-first strategy (online-only)
+// Fetch event - network-first strategy with improved error handling
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -281,18 +281,28 @@ self.addEventListener('fetch', (event) => {
 
     event.respondWith(
         // Always try network first
-        fetch(request)
+        fetch(request, { credentials: 'same-origin' })
             .then((response) => {
+                // Check for authentication errors
+                if (response.status === 401 || response.status === 403) {
+                    console.warn('[SW] Authentication error:', response.status, 'for', url.href);
+                    // Let the response through so app can handle session expiry
+                    return response;
+                }
+
                 // Update cache with fresh response for app shell assets
                 if (APP_SHELL_ASSETS.includes(url.href)) {
                     const responseClone = response.clone();
                     caches.open(APP_SHELL_CACHE)
-                        .then((cache) => cache.put(request, responseClone));
+                        .then((cache) => cache.put(request, responseClone))
+                        .catch((err) => console.error('[SW] Cache update failed:', err));
                 }
 
                 return response;
             })
             .catch((error) => {
+                console.log('[SW] Network request failed for:', url.href);
+
                 // Only fall back to cache for app shell assets
                 if (APP_SHELL_ASSETS.includes(url.href)) {
                     return caches.match(request)
@@ -305,7 +315,19 @@ self.addEventListener('fetch', (event) => {
                         });
                 }
 
-                // For everything else, show offline message
+                // For AJAX requests, return error response
+                if (url.pathname.includes('admin-ajax.php')) {
+                    return new Response(
+                        JSON.stringify({ success: false, data: { message: 'Network error. Please check your connection.' } }),
+                        {
+                            status: 503,
+                            statusText: 'Service Unavailable',
+                            headers: { 'Content-Type': 'application/json' }
+                        }
+                    );
+                }
+
+                // For everything else, throw error
                 throw error;
             })
     );

@@ -101,6 +101,9 @@ class HHA_Core {
 
         // Remove WordPress default site icon and manifest on app page
         add_action('wp_head', array($this, 'remove_wp_default_pwa'), 0);
+
+        // Heartbeat API for session management
+        add_filter('heartbeat_received', array($this, 'heartbeat_received'), 10, 2);
     }
 
     /**
@@ -149,10 +152,13 @@ class HHA_Core {
         // Enqueue scripts
         wp_enqueue_script('jquery');
 
+        // Enqueue WordPress Heartbeat API for session management
+        wp_enqueue_script('heartbeat');
+
         wp_enqueue_script(
             'hha-app',
             HHA_PLUGIN_URL . 'assets/js/app.js',
-            array('jquery'),
+            array('jquery', 'heartbeat'),
             HHA_VERSION,
             true
         );
@@ -445,5 +451,43 @@ class HHA_Core {
      */
     public function get_plugin_url() {
         return HHA_PLUGIN_URL;
+    }
+
+    /**
+     * Handle WordPress Heartbeat API responses.
+     *
+     * @param array $response Heartbeat response.
+     * @param array $data Data sent from client.
+     * @return array Modified response.
+     */
+    public function heartbeat_received($response, $data) {
+        // Only process if HHA heartbeat data is present
+        if (!isset($data['hha_heartbeat'])) {
+            return $response;
+        }
+
+        // Check if user is logged in
+        if (!is_user_logged_in()) {
+            $response['hha_heartbeat'] = array(
+                'session_expired' => true,
+            );
+            return $response;
+        }
+
+        // Check if user has access
+        if (!$this->components['auth']->user_has_access()) {
+            $response['hha_heartbeat'] = array(
+                'session_expired' => true,
+            );
+            return $response;
+        }
+
+        // Session is valid
+        $response['hha_heartbeat'] = array(
+            'session_expired' => false,
+            'timestamp'       => current_time('timestamp'),
+        );
+
+        return $response;
     }
 }

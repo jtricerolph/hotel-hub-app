@@ -18,6 +18,7 @@
             this.loadNavigation();
             this.checkOnlineStatus();
             this.initPWA();
+            this.initHeartbeat();
             this.restoreLastModule();
         },
 
@@ -45,20 +46,18 @@
             window.addEventListener('online', () => this.setOnlineStatus(true));
             window.addEventListener('offline', () => this.setOnlineStatus(false));
 
-            // Trigger heartbeat on wake from standby - benefits ALL modules
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden && typeof wp !== 'undefined' && wp.heartbeat) {
-                    console.log('[HHA] Page became visible, triggering immediate heartbeat');
-                    wp.heartbeat.connectNow();
+            // Check session and trigger heartbeat on wake from standby
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    console.log('[HHA] Page became visible, checking session...');
+                    this.checkSession();
                 }
             });
 
             // Fallback for window focus
-            window.addEventListener('focus', function() {
-                if (typeof wp !== 'undefined' && wp.heartbeat) {
-                    console.log('[HHA] Window gained focus, triggering immediate heartbeat');
-                    wp.heartbeat.connectNow();
-                }
+            window.addEventListener('focus', () => {
+                console.log('[HHA] Window gained focus, checking session...');
+                this.checkSession();
             });
         },
 
@@ -97,9 +96,21 @@
                     this.closeHotelSelector();
                     this.loadNavigation();
 
+                    // Save to localStorage as backup
+                    localStorage.setItem('hha-hotel-id', hotelId);
+                    localStorage.setItem('hha-hotel-name', response.data.hotel.name);
+
                     // Clear current module and show welcome with instruction
                     this.currentModuleId = null;
                     this.showWelcome(true); // Pass true to indicate hotel is selected
+                }
+            }).fail((xhr) => {
+                // Handle authentication errors
+                if (xhr.status === 401 || xhr.status === 403) {
+                    console.warn('[HHA] Authentication error while selecting hotel');
+                    this.handleSessionExpired();
+                } else {
+                    this.showError('Failed to select hotel. Please try again.');
                 }
             });
         },
@@ -114,6 +125,12 @@
             }, (response) => {
                 if (response.success) {
                     this.renderNavigation(response.data.navigation, $nav);
+                }
+            }).fail((xhr) => {
+                // Handle authentication errors
+                if (xhr.status === 401 || xhr.status === 403) {
+                    console.warn('[HHA] Authentication error while loading navigation');
+                    this.handleSessionExpired();
                 }
             });
         },
@@ -181,9 +198,16 @@
                 } else {
                     this.showError(response.data.message || 'Failed to load module');
                 }
-            }).fail(() => {
+            }).fail((xhr) => {
                 this.hideLoading();
-                this.showError('Network error. Please try again.');
+
+                // Handle authentication errors
+                if (xhr.status === 401 || xhr.status === 403) {
+                    console.warn('[HHA] Authentication error while loading module');
+                    this.handleSessionExpired();
+                } else {
+                    this.showError('Network error. Please try again.');
+                }
             });
         },
 
@@ -270,6 +294,125 @@
                 $('.hha-offline-indicator').hide();
             } else {
                 $('.hha-offline-indicator').show();
+            }
+        },
+
+        checkSession: function() {
+            // Don't check if offline
+            if (!navigator.onLine) {
+                console.log('[HHA] Offline, skipping session check');
+                return;
+            }
+
+            $.post(hhaData.ajaxUrl, {
+                action: 'hha_check_session',
+                nonce: hhaData.nonce
+            }, (response) => {
+                if (response.success) {
+                    console.log('[HHA] Session valid');
+
+                    // Restore hotel ID from session or localStorage
+                    if (response.data.hotel_id) {
+                        this.currentHotelId = response.data.hotel_id;
+                        console.log('[HHA] Restored hotel ID from session:', this.currentHotelId);
+
+                        // Update UI if hotel name is in localStorage
+                        const hotelName = localStorage.getItem('hha-hotel-name');
+                        if (hotelName) {
+                            $('.hha-current-hotel-name').text(hotelName);
+                        }
+                    } else if (!this.currentHotelId) {
+                        // Try to restore from localStorage as fallback
+                        const storedHotelId = localStorage.getItem('hha-hotel-id');
+                        const storedHotelName = localStorage.getItem('hha-hotel-name');
+
+                        if (storedHotelId && storedHotelName) {
+                            this.currentHotelId = parseInt(storedHotelId);
+                            $('.hha-current-hotel-name').text(storedHotelName);
+                            console.log('[HHA] Restored hotel from localStorage:', this.currentHotelId);
+                        }
+                    }
+
+                    // Trigger heartbeat to keep session alive
+                    if (typeof wp !== 'undefined' && wp.heartbeat) {
+                        wp.heartbeat.connectNow();
+                    }
+                } else {
+                    console.warn('[HHA] Session invalid:', response.data.message);
+                    this.handleSessionExpired();
+                }
+            }).fail((xhr) => {
+                // Handle 401/403 as session expired
+                if (xhr.status === 401 || xhr.status === 403) {
+                    console.warn('[HHA] Session expired (status:', xhr.status + ')');
+                    this.handleSessionExpired();
+                } else {
+                    console.error('[HHA] Session check failed:', xhr.status);
+                }
+            });
+        },
+
+        handleSessionExpired: function() {
+            // Show session expired message
+            $('.hha-module-container').html(`
+                <div style="max-width: 600px; margin: 60px auto; text-align: center;">
+                    <div style="font-size: 60px; color: #FF9800; margin-bottom: 20px;">
+                        <span class="dashicons dashicons-lock"></span>
+                    </div>
+                    <h2>Session Expired</h2>
+                    <p>Your session has expired for security reasons.</p>
+                    <p style="margin-top: 20px;">
+                        <button class="hha-button" onclick="window.location.reload()">Login Again</button>
+                    </p>
+                </div>
+            `);
+
+            // Clear local data
+            localStorage.removeItem('hha-last-module');
+            this.currentHotelId = null;
+            this.currentModuleId = null;
+
+            // Redirect to login after showing message briefly
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        },
+
+        initHeartbeat: function() {
+            // Wait for heartbeat to be ready
+            $(document).on('heartbeat-send', (event, data) => {
+                // Add custom data to heartbeat
+                data.hha_heartbeat = {
+                    hotel_id: this.currentHotelId,
+                    module_id: this.currentModuleId
+                };
+            });
+
+            $(document).on('heartbeat-tick', (event, data) => {
+                // Handle heartbeat response
+                if (data.hha_heartbeat) {
+                    console.log('[HHA] Heartbeat tick received');
+
+                    // Check if session is still valid
+                    if (data.hha_heartbeat.session_expired) {
+                        console.warn('[HHA] Server reports session expired');
+                        this.handleSessionExpired();
+                    }
+                }
+            });
+
+            $(document).on('heartbeat-error', (event, jqXHR, textStatus, error) => {
+                console.error('[HHA] Heartbeat error:', textStatus, error);
+                // Don't treat heartbeat errors as session expiry unless it's a 401/403
+                if (jqXHR && (jqXHR.status === 401 || jqXHR.status === 403)) {
+                    this.handleSessionExpired();
+                }
+            });
+
+            // Configure heartbeat interval (60 seconds)
+            if (typeof wp !== 'undefined' && wp.heartbeat) {
+                wp.heartbeat.interval(60);
+                console.log('[HHA] Heartbeat initialized with 60s interval');
             }
         },
 
