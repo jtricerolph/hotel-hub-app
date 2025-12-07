@@ -218,16 +218,11 @@ class HHA_AJAX {
             ), 401);
         }
 
-        // Check if user still has access
-        if (!hha()->components['auth']->user_has_access()) {
-            wp_send_json_error(array(
-                'message' => 'Access denied',
-                'code'    => 'access_denied',
-            ), 403);
-        }
-
         // Get current hotel from session
-        $hotel_id = hha()->components['auth']->get_current_hotel_id();
+        if (!session_id()) {
+            session_start();
+        }
+        $hotel_id = isset($_SESSION['hha_current_hotel_id']) ? absint($_SESSION['hha_current_hotel_id']) : null;
 
         wp_send_json_success(array(
             'valid'    => true,
