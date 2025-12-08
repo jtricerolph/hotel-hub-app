@@ -36,6 +36,8 @@ class HHA_AJAX {
         add_action('wp_ajax_hha_save_task_types', array($this, 'save_task_types'));
         add_action('wp_ajax_hha_fetch_note_types', array($this, 'fetch_note_types'));
         add_action('wp_ajax_hha_save_note_types', array($this, 'save_note_types'));
+        add_action('wp_ajax_hha_save_module_order', array($this, 'save_module_order'));
+        add_action('wp_ajax_hha_reset_module_order', array($this, 'reset_module_order'));
     }
 
     /**
@@ -896,5 +898,68 @@ class HHA_AJAX {
                 'message' => 'Failed to save note types configuration',
             ));
         }
+    }
+
+    /**
+     * Save module sort order (admin).
+     */
+    public function save_module_order() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_save_module_order')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        $module_order = isset($_POST['module_order']) ? json_decode(stripslashes($_POST['module_order']), true) : array();
+
+        if (empty($module_order) || !is_array($module_order)) {
+            wp_send_json_error(array(
+                'message' => 'Module order data required',
+            ));
+        }
+
+        // Sanitize module IDs
+        $module_order = array_map('sanitize_text_field', $module_order);
+
+        // Save to options
+        update_option('hha_module_order', $module_order);
+
+        wp_send_json_success(array(
+            'message' => 'Module order saved successfully',
+        ));
+    }
+
+    /**
+     * Reset module sort order to default (admin).
+     */
+    public function reset_module_order() {
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'hha_reset_module_order')) {
+            wp_send_json_error(array(
+                'message' => 'Invalid nonce',
+            ));
+        }
+
+        // Check admin capabilities
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array(
+                'message' => 'Insufficient permissions',
+            ));
+        }
+
+        // Delete the custom order option
+        delete_option('hha_module_order');
+
+        wp_send_json_success(array(
+            'message' => 'Module order reset to default',
+        ));
     }
 }

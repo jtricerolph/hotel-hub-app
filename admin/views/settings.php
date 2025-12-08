@@ -124,6 +124,18 @@ if (!defined('ABSPATH')) {
             </tr>
         </table>
 
+        <!-- Module Sort Order Card -->
+        <div class="hha-settings-card" style="margin: 20px 0; padding: 20px; background: #fff; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+            <h3 style="margin-top: 0;">Module Menu Order</h3>
+            <p>Customize the display order of modules in the sidebar navigation.</p>
+            <p>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=hotel-hub-module-order')); ?>" class="button button-secondary">
+                    <span class="dashicons dashicons-sort" style="vertical-align: middle; margin-right: 5px;"></span>
+                    Configure Module Order
+                </a>
+            </p>
+        </div>
+
         <p class="submit">
             <button type="submit" name="hha_save_settings" class="button button-primary">Save Settings</button>
         </p>

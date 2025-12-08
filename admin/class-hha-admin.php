@@ -20,6 +20,7 @@ class HHA_Admin {
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_init', array($this, 'handle_form_submissions'));
         add_action('admin_notices', array($this, 'show_admin_notices'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
     }
 
     /**
@@ -75,6 +76,16 @@ class HHA_Admin {
             'manage_options',
             'hotel-hub-reports',
             array($this, 'render_reports_page')
+        );
+
+        // Module Sort Order (hidden from menu, accessed via settings card)
+        add_submenu_page(
+            null,
+            'Module Sort Order',
+            'Module Sort Order',
+            'manage_options',
+            'hotel-hub-module-order',
+            array($this, 'render_module_order_page')
         );
 
         // Add modules menu
@@ -220,6 +231,31 @@ class HHA_Admin {
         } else {
             // Show reports overview
             hha()->reports->render_reports_page();
+        }
+    }
+
+    /**
+     * Render module sort order page.
+     */
+    public function render_module_order_page() {
+        // Get all modules (sorted by current order)
+        $modules = hha()->modules->get_modules();
+
+        // Get saved custom order
+        $custom_order = get_option('hha_module_order', array());
+
+        include HHA_PLUGIN_DIR . 'admin/views/module-order.php';
+    }
+
+    /**
+     * Enqueue admin scripts.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function enqueue_admin_scripts($hook) {
+        // Load jQuery UI Sortable on module order page
+        if (strpos($hook, 'hotel-hub-module-order') !== false) {
+            wp_enqueue_script('jquery-ui-sortable');
         }
     }
 

@@ -93,7 +93,35 @@ class HHA_Modules {
             $modules[$module_id] = $module_data['config'];
         }
 
-        // Sort by order
+        // Get custom sort order from options
+        $custom_order = get_option('hha_module_order', array());
+
+        if (!empty($custom_order)) {
+            // Sort modules by custom order
+            $ordered_modules = array();
+            $remaining_modules = $modules;
+
+            // First, add modules in custom order
+            foreach ($custom_order as $module_id) {
+                if (isset($modules[$module_id])) {
+                    $ordered_modules[$module_id] = $modules[$module_id];
+                    unset($remaining_modules[$module_id]);
+                }
+            }
+
+            // Then, add any new modules not in custom order (sorted by default order)
+            uasort($remaining_modules, function($a, $b) {
+                return $a['order'] - $b['order'];
+            });
+
+            foreach ($remaining_modules as $module_id => $module) {
+                $ordered_modules[$module_id] = $module;
+            }
+
+            return $ordered_modules;
+        }
+
+        // Default: sort by order property
         uasort($modules, function($a, $b) {
             return $a['order'] - $b['order'];
         });
